@@ -75,17 +75,42 @@
 </template>
 
 <script setup>
+/**
+ * 登录页面组件
+ * 功能：用户登录、记住密码、验证码验证
+ */
+
+// ==================== 导入依赖 ====================
+// 获取验证码图片的 API 接口
 import { getCodeImg } from "@/api/login"
+// Cookie 操作库，用于存储和读取用户信息
 import Cookies from "js-cookie"
+// RSA 加密解密工具，用于加密存储的密码
 import { encrypt, decrypt } from "@/utils/jsencrypt"
+// Pinia 用户状态管理 store
 import useUserStore from '@/stores/modules/user'
 
+// ==================== 初始化变量 ====================
+// 从环境变量中获取应用标题
 const title = import.meta.env.VITE_APP_TITLE
+// 获取用户状态管理实例
 const userStore = useUserStore()
+// 获取当前路由对象（用于读取路由参数）
 const route = useRoute()
+// 获取路由导航对象（用于页面跳转）
 const router = useRouter()
+// 获取组件实例的代理对象（用于访问 refs）
 const { proxy } = getCurrentInstance()
 
+// ==================== 表单数据 ====================
+/**
+ * 登录表单数据
+ * - username: 用户名
+ * - password: 密码
+ * - rememberMe: 是否记住密码（复选框状态）
+ * - code: 验证码
+ * - uuid: 验证码的唯一标识符（用于后端验证）
+ */
 const loginForm = ref({
   username: "",
   password: "",
@@ -94,52 +119,93 @@ const loginForm = ref({
   uuid: ""
 })
 
+// ==================== 表单验证规则 ====================
+/**
+ * Element Plus 表单验证规则
+ * - username: 必填，失去焦点时触发验证
+ * - password: 必填，失去焦点时触发验证
+ * - code: 必填，值改变时触发验证（验证码输入时）
+ */
 const loginRules = {
   username: [{ required: true, trigger: "blur", message: "请输入您的账号" }],
   password: [{ required: true, trigger: "blur", message: "请输入您的密码" }],
   code: [{ required: true, trigger: "change", message: "请输入验证码" }]
 }
 
+// ==================== 响应式状态 ====================
+// 验证码图片的 base64 数据 URL
 const codeUrl = ref("")
+// 登录按钮的加载状态（防止重复提交）
 const loading = ref(false)
-// 验证码开关
+// 验证码功能开关（由后端接口返回，控制是否显示验证码）
 const captchaEnabled = ref(false)
-// 注册开关
+// 注册功能开关（控制是否显示注册链接）
 const register = ref(false)
+// 登录成功后的重定向路径（从路由 query 参数中获取）
 const redirect = ref(undefined)
 
+// ==================== 监听路由变化 ====================
+/**
+ * 监听路由变化，获取重定向路径
+ * immediate: true 表示立即执行一次，用于初始化时获取 redirect 参数
+ */
 watch(route, (newRoute) => {
   redirect.value = newRoute.query && newRoute.query.redirect
 }, { immediate: true })
 
+// ==================== 登录处理函数 ====================
+/**
+ * 处理用户登录
+ * 1. 验证表单数据
+ * 2. 根据"记住密码"选项保存或清除 Cookie
+ * 3. 调用登录接口
+ * 4. 登录成功后跳转到目标页面或首页
+ * 5. 登录失败后重新获取验证码
+ */
 function handleLogin() {
+  // 使用 Element Plus 的表单验证
   proxy.$refs.loginRef.validate(valid => {
+    // 表单验证通过
     if (valid) {
+      // 设置加载状态，禁用登录按钮
       loading.value = true
-      // 勾选了需要记住密码设置在 cookie 中设置记住用户名和密码
+
+      // 如果用户勾选了"记住密码"
       if (loginForm.value.rememberMe) {
+        // 将用户名、加密后的密码、记住密码状态保存到 Cookie
+        // expires: 30 表示 Cookie 30 天后过期
         Cookies.set("username", loginForm.value.username, { expires: 30 })
+        // 密码使用 RSA 加密后存储，提高安全性
         Cookies.set("password", encrypt(loginForm.value.password), { expires: 30 })
         Cookies.set("rememberMe", loginForm.value.rememberMe, { expires: 30 })
       } else {
-        // 否则移除
+        // 如果未勾选"记住密码"，清除之前保存的 Cookie
         Cookies.remove("username")
         Cookies.remove("password")
         Cookies.remove("rememberMe")
       }
-      // 调用action的登录方法
+
+      // 调用 Pinia store 中的登录方法
       userStore.login(loginForm.value).then(() => {
+        // 登录成功
+        // 获取当前路由的所有 query 参数
         const query = route.query
+        // 过滤掉 redirect 参数，保留其他参数（用于登录后跳转时携带）
         const otherQueryParams = Object.keys(query).reduce((acc, cur) => {
           if (cur !== "redirect") {
             acc[cur] = query[cur]
           }
           return acc
         }, {})
+        // 跳转到 redirect 指定的页面，如果没有则跳转到首页
+        // 同时携带其他 query 参数
         router.push({ path: redirect.value || "/", query: otherQueryParams })
       }).catch(() => {
+        // 登录失败
+        // 取消加载状态，恢复登录按钮
         loading.value = false
-        // 重新获取验证码
+        // 如果启用了验证码功能，登录失败后重新获取验证码
+        // 防止验证码被重复使用
         if (captchaEnabled.value) {
           getCode()
         }
@@ -148,28 +214,58 @@ function handleLogin() {
   })
 }
 
+// ==================== 获取验证码 ====================
+/**
+ * 从后端获取验证码图片
+ * 1. 调用 API 获取验证码图片和 UUID
+ * 2. 根据后端返回的配置决定是否启用验证码功能
+ * 3. 将 base64 图片数据设置到 codeUrl
+ * 4. 保存 UUID 用于后续验证码校验
+ */
 function getCode() {
   getCodeImg().then(res => {
+    // 如果后端返回了 captchaEnabled 配置，使用该配置；否则默认为 true（启用验证码）
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
+
+    // 如果启用了验证码功能
     if (captchaEnabled.value) {
+      // 将后端返回的 base64 图片数据转换为 data URL 格式
+      // 格式：data:image/gif;base64,{base64数据}
       codeUrl.value = "data:image/gif;base64," + res.img
+      // 保存验证码的唯一标识符，提交登录时需要一起发送给后端验证
       loginForm.value.uuid = res.uuid
     }
   })
 }
 
+// ==================== 读取 Cookie ====================
+/**
+ * 从 Cookie 中读取之前保存的用户名和密码
+ * 用于实现"记住密码"功能，页面加载时自动填充表单
+ * 如果 Cookie 中不存在，则使用表单的默认值
+ */
 function getCookie() {
+  // 从 Cookie 中读取之前保存的值
   const username = Cookies.get("username")
   const password = Cookies.get("password")
   const rememberMe = Cookies.get("rememberMe")
+
+  // 更新表单数据
   loginForm.value = {
+    // 如果 Cookie 中有用户名，使用 Cookie 的值；否则保持表单默认值（空字符串）
     username: username === undefined ? loginForm.value.username : username,
+    // 如果 Cookie 中有密码，解密后使用；否则保持表单默认值（空字符串）
+    // 注意：存储时是加密的，读取时需要解密
     password: password === undefined ? loginForm.value.password : decrypt(password),
+    // 如果 Cookie 中有记住密码状态，转换为布尔值；否则默认为 false
     rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
   }
 }
 
+// ==================== 组件挂载时执行 ====================
+// 页面加载时立即获取验证码
 getCode()
+// 页面加载时读取 Cookie 中的用户信息（实现记住密码功能）
 getCookie()
 </script>
 
