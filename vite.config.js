@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from 'vite'
 import createVitePlugins from './vite/plugins'
 
 // 后端接口基地址
-const baseUrl = 'http://localhost:8080'
+const baseUrl = 'http://localhost:8081'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
@@ -12,19 +12,17 @@ export default defineConfig(({ mode, command }) => {
   return {
     base: VITE_APP_ENV === 'production' ? '/' : '/',
 
-    plugins: [
-      createVitePlugins(env, command === 'build'),
-    ],
+    plugins: [createVitePlugins(env, command === 'build')],
     resolve: {
       // https://cn.vitejs.dev/config/#resolve-alias
       alias: {
         // 设置路径
         '~': path.resolve(__dirname, './'),
         // 设置别名
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(__dirname, './src'),
       },
       // https://cn.vitejs.dev/config/#resolve-extensions
-      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
     },
     // 打包配置
     build: {
@@ -37,9 +35,9 @@ export default defineConfig(({ mode, command }) => {
         output: {
           chunkFileNames: 'static/js/[name]-[hash].js',
           entryFileNames: 'static/js/[name]-[hash].js',
-          assetFileNames: 'static/[ext]/[name]-[hash].[ext]'
-        }
-      }
+          assetFileNames: 'static/[ext]/[name]-[hash].[ext]',
+        },
+      },
     },
     // vite 相关配置
     server: {
@@ -51,14 +49,14 @@ export default defineConfig(({ mode, command }) => {
         '/dev-api': {
           target: baseUrl,
           changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/dev-api/, '')
+          rewrite: (p) => p.replace(/^\/dev-api/, ''),
         },
-         // springdoc proxy
-         '^/v3/api-docs/(.*)': {
+        // springdoc proxy
+        '^/v3/api-docs/(.*)': {
           target: baseUrl,
           changeOrigin: true,
-        }
-      }
+        },
+      },
     },
     css: {
       postcss: {
@@ -70,11 +68,11 @@ export default defineConfig(({ mode, command }) => {
                 if (atRule.name === 'charset') {
                   atRule.remove()
                 }
-              }
-            }
-          }
-        ]
-      }
+              },
+            },
+          },
+        ],
+      },
     },
   }
 })

@@ -21,8 +21,6 @@ import useAppStore from "@/stores/modules/app"
 
 const appStore = useAppStore()
 const size = computed(() => appStore.size)
-const route = useRoute()
-const router = useRouter()
 const { proxy } = getCurrentInstance()
 const sizeOptions = ref([
   { label: "较大", value: "large" },

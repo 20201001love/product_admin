@@ -3,29 +3,37 @@
     <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
 
     <div class="logo-header" style="background-color: #6DB5FF">
+      <!-- logo区域 -->
       <div class="logo-container">
         <img :src="logo" class="logo-img" />
         <span class="logo-title" style="color: #fff">{{ title }}</span>
       </div>
+      <!-- 导航栏区域 -->
       <div class="header-navbar">
+        <!-- 折叠按钮 -->
         <hamburger id="hamburger-container" :is-active="appStore.sidebar.opened" class="hamburger-container"
           @toggleClick="toggleSideBar" />
+        <!-- 面包屑导航 -->
         <breadcrumb v-if="!settingsStore.topNav" id="breadcrumb-container" class="breadcrumb-container" />
+        <!-- 顶部导航 -->
         <top-nav v-if="settingsStore.topNav" id="topmenu-container" class="topmenu-container" />
-
+        <!-- 右侧菜单 -->
         <div class="right-menu">
           <template v-if="appStore.device !== 'mobile'">
+            <!-- 欢迎语 -->
             <div class="welcome-container right-menu-item">
               <span>您好, {{ nickName }}</span>
             </div>
+            <!-- 注销按钮 -->
             <el-button type="text" @click="logout" class="right-menu-item logout-btn">
               <svg-icon icon-class="logout" style="font-size: 15px" class-name='custom-class' />
               <el-link type="primary">注销</el-link>
             </el-button>
+            <!-- 搜索框 -->
             <header-search id="header-search" class="right-menu-item hover-effect" />
-
+            <!-- 全屏按钮 -->
             <screenfull id="screenfull" class="right-menu-item hover-effect" />
-
+            <!-- 主题模式 -->
             <el-tooltip content="主题模式" effect="dark" placement="bottom">
               <div class="right-menu-item hover-effect theme-switch-wrapper" @click="toggleTheme">
                 <svg-icon v-if="settingsStore.isDark" icon-class="sunny" />
@@ -33,10 +41,12 @@
               </div>
             </el-tooltip>
 
+            <!-- 布局大小 -->
             <el-tooltip content="布局大小" effect="dark" placement="bottom">
               <size-select id="size-select" class="right-menu-item hover-effect" />
             </el-tooltip>
           </template>
+          <!-- 用户头像 -->
           <div class="avatar-container">
             <el-dropdown @command="handleCommand" class="right-menu-item hover-effect" trigger="click">
               <div class="avatar-wrapper">
@@ -45,6 +55,7 @@
               </div>
               <template #dropdown>
                 <el-dropdown-menu>
+                  <!-- 个人中心 -->
                   <router-link to="/user/profile">
                     <el-dropdown-item>个人中心</el-dropdown-item>
                   </router-link>
@@ -56,12 +67,16 @@
       </div>
     </div>
 
+    <!-- 侧边栏 -->
     <sidebar v-if="!sidebar.hide" class="sidebar-container" />
+    <!-- 主容器 -->
     <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" class="main-containers">
       <div :class="{ 'fixed-header': false }">
+        <!-- 顶部导航 -->
         <navbar @setLayout="setLayout" />
         <tags-view v-if="needTagsView" />
       </div>
+      <!-- 主内容区域 -->
       <app-main />
       <settings ref="settingRef" />
     </div>
@@ -131,6 +146,7 @@ function setLayout() {
   emits('setLayout')
 }
 
+// 切换主题模式
 function toggleTheme() {
   settingsStore.toggleTheme()
 }
@@ -177,8 +193,8 @@ getList()
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/styles/mixin.scss";
-@import "@/assets/styles/variables.module.scss";
+@use "@/assets/styles/mixin.scss" as *;
+@use "@/assets/styles/variables.module.scss" as *;
 
 .app-wrapper {
   @include clearfix;

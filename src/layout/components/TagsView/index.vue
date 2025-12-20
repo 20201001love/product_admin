@@ -1,6 +1,9 @@
 <template>
+  <!-- 标签页视图容器 -->
   <div id="tags-view-container" class="tags-view-container">
+    <!-- 标签页视图滚动容器 -->
     <scroll-pane ref="scrollPaneRef" class="tags-view-wrapper" @scroll="handleScroll">
+      <!-- 标签页视图项 -->
       <router-link v-for="tag in visitedViews" :key="tag.path" :data-path="tag.path"
         :class="isActive(tag) ? 'active' : ''" :to="{ path: tag.path, query: tag.query, fullPath: tag.fullPath }"
         class="tags-view-item" :style="activeStyle(tag)" @click.middle="!isAffix(tag) ? closeSelectedTag(tag) : ''"
@@ -11,22 +14,29 @@
         </span>
       </router-link>
     </scroll-pane>
+    <!-- 标签页视图右键菜单 -->
     <ul v-show="visible" :style="{ left: left + 'px', top: top + 'px' }" class="contextmenu">
+      <!-- 刷新页面 -->
       <li @click="refreshSelectedTag(selectedTag)">
         <refresh-right style="width: 1em; height: 1em;" /> 刷新页面
       </li>
+      <!-- 关闭当前标签页 -->
       <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">
         <close style="width: 1em; height: 1em;" /> 关闭当前
       </li>
+      <!-- 关闭其他标签页 -->
       <li @click="closeOthersTags">
         <circle-close style="width: 1em; height: 1em;" /> 关闭其他
       </li>
+      <!-- 关闭左侧标签页 -->
       <li v-if="!isFirstView()" @click="closeLeftTags">
         <back style="width: 1em; height: 1em;" /> 关闭左侧
       </li>
+      <!-- 关闭右侧标签页 -->
       <li v-if="!isLastView()" @click="closeRightTags">
         <right style="width: 1em; height: 1em;" /> 关闭右侧
       </li>
+      <!-- 关闭所有标签页 -->
       <li @click="closeAllTags(selectedTag)">
         <circle-close style="width: 1em; height: 1em;" /> 全部关闭
       </li>
