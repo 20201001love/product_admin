@@ -33,9 +33,9 @@ export const constantRoutes = [
     children: [
       {
         path: '/redirect/:path(.*)',
-        component: () => import('@/views/redirect/index.vue')
-      }
-    ]
+        component: () => import('@/views/redirect/index.vue'),
+      },
+    ],
   },
   {
     path: '/login',
@@ -47,15 +47,15 @@ export const constantRoutes = [
     name: 'screen',
     component: () => import('@/views/screen/index.vue'),
   },
-    {
-    path: "/:pathMatch(.*)*",
+  {
+    path: '/:pathMatch(.*)*',
     component: () => import('@/views/error/404'),
-    hidden: true
+    hidden: true,
   },
   {
     path: '/401',
     component: () => import('@/views/error/401'),
-    hidden: true
+    hidden: true,
   },
   {
     path: '',
@@ -66,20 +66,31 @@ export const constantRoutes = [
         path: '/index',
         component: () => import('@/views/index'),
         name: 'Index',
-        meta: { title: '首页', icon: '首页', affix: true }
-      }
-    ]
+        meta: { title: '首页', icon: '首页', affix: true },
+      },
+    ],
+  },
+  {
+    path: '/user',
+    component: Layout,
+    hidden: true,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: 'profile',
+        component: () => import('@/views/system/user/profile/index'),
+        name: 'Profile',
+        meta: { title: '个人中心', icon: 'user' },
+      },
+    ],
   },
 ]
 
-export const dynamicRoutes = [
-]
+export const dynamicRoutes = []
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    ...constantRoutes,
-  ],
+  routes: [...constantRoutes],
 })
 
 export default router

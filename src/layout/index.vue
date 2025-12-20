@@ -22,7 +22,7 @@
           <template v-if="appStore.device !== 'mobile'">
             <!-- 欢迎语 -->
             <div class="welcome-container right-menu-item">
-              <span>您好, {{ nickName }}</span>
+              <span>您好, {{ userName }}</span>
             </div>
             <!-- 注销按钮 -->
             <el-button type="text" @click="logout" class="right-menu-item logout-btn">
@@ -104,11 +104,11 @@ const title = import.meta.env.VITE_APP_TITLE
 const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
-const nickName = ref(null)
+const userName = ref(null)
 
 const getList = () => {
   getUser(userStore.id).then(res => {
-    nickName.value = res.data.nickName
+    userName.value = res.data.userName
   })
 }
 

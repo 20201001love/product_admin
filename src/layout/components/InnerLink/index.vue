@@ -1,12 +1,7 @@
 <template>
   <div :style="'height:' + height" v-loading="loading" element-loading-text="正在加载页面，请稍候！">
-    <iframe
-      :id="iframeId"
-      style="width: 100%; height: 100%"
-      :src="src"
-      ref="iframeRef"
-      frameborder="no"
-    ></iframe>
+    <!-- <iframe> 是一个 HTML 元素，用于在当前页面中嵌入另一个独立的网页。它允许你创建一个子窗口，加载来自不同域名的内容。 -->
+    <iframe :id="iframeId" style="width: 100%; height: 100%" :src="src" ref="iframeRef" frameborder="no"></iframe>
   </div>
 </template>
 

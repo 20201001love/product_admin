@@ -15,6 +15,7 @@ import Layout from '@/layout/index'
 import ParentView from '@/components/ParentView'
 import InnerLink from '@/layout/components/InnerLink'
 
+// import.meta.glob 是一个强大的动态导入功能，用于批量导入文件目录中的模块
 /**
  * 使用 Vite 的 glob 功能，动态匹配 views 目录下所有的 .vue 文件
  * 返回格式：{ './views/system/user/index.vue': () => import('./views/system/user/index.vue'), ... }
