@@ -50,7 +50,7 @@
           <div class="avatar-container">
             <el-dropdown @command="handleCommand" class="right-menu-item hover-effect" trigger="click">
               <div class="avatar-wrapper">
-                <img :src="userStore.avatar" class="user-avatar" />
+                <img :src="userStore.avatar" :key="avatarKey" class="user-avatar" />
                 <el-icon><caret-bottom /></el-icon>
               </div>
               <template #dropdown>
@@ -105,6 +105,13 @@ const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const userName = ref(null)
+// 用于强制刷新头像的 key
+const avatarKey = ref(Date.now())
+
+// 监听头像变化，当头像更新时强制刷新
+watch(() => userStore.avatar, () => {
+  avatarKey.value = Date.now()
+})
 
 const getList = () => {
   getUser(userStore.id).then(res => {

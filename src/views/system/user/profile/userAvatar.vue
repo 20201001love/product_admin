@@ -1,6 +1,6 @@
 <template>
   <div class="user-info-head" @click="editCropper()">
-    <img :src="options.img" title="点击上传头像" class="img-circle img-lg" />
+    <img :src="userStore.avatar" :key="avatarKey" title="点击上传头像" class="img-circle img-lg" />
     <el-dialog :title="title" v-model="open" width="800px" append-to-body @opened="modalOpened" @close="closeDialog">
       <el-row>
         <el-col :xs="24" :md="12" :style="{ height: '350px' }">
@@ -66,10 +66,12 @@ const { proxy } = getCurrentInstance()
 const open = ref(false)
 const visible = ref(false)
 const title = ref("修改头像")
+// 用于强制刷新头像的 key
+const avatarKey = ref(Date.now())
 
 //图片裁剪数据
 const options = reactive({
-  img: userStore.avatar,     // 裁剪图片的地址
+  img: userStore.avatar || '',     // 裁剪图片的地址
   autoCrop: true,            // 是否默认生成截图框
   autoCropWidth: 200,        // 默认生成截图框宽度
   autoCropHeight: 200,       // 默认生成截图框高度
@@ -81,6 +83,8 @@ const options = reactive({
 
 /** 编辑头像 */
 function editCropper() {
+  // 确保打开对话框时，options.img 是最新的头像
+  options.img = userStore.avatar || ''
   open.value = true
 }
 
@@ -128,11 +132,29 @@ function uploadImg() {
     let formData = new FormData()
     formData.append("avatarfile", data, options.filename)
     uploadAvatar(formData).then(response => {
+      // 获取后端返回的图片 URL
+      // 如果已经是完整的 URL（http/https 开头），直接使用
+      // 否则拼接后端 API 地址
+      let newAvatarUrl = response.imgUrl
+      if (!newAvatarUrl.startsWith('http://') && !newAvatarUrl.startsWith('https://')) {
+        newAvatarUrl = import.meta.env.VITE_APP_BASE_API + newAvatarUrl
+      }
+
+      // 更新 store 中的头像
+      userStore.avatar = newAvatarUrl
+
+      // 同时更新 options.img，确保再次打开时显示新图片
+      options.img = newAvatarUrl
+
+      // 更新 avatarKey 以强制刷新图片
+      avatarKey.value = Date.now()
+
+      // 关闭对话框
       open.value = false
-      options.img = import.meta.env.VITE_APP_BASE_API + response.imgUrl
-      userStore.avatar = options.img
-      proxy.$modal.msgSuccess("修改成功")
       visible.value = false
+
+      // 显示成功提示
+      proxy.$modal.msgSuccess("修改成功")
     })
   })
 }
@@ -144,8 +166,8 @@ function realTime(data) {
 
 /** 关闭窗口 */
 function closeDialog() {
-  options.img = userStore.avatar
-  options.visible = false
+  options.img = userStore.avatar || ''
+  visible.value = false
 }
 </script>
 
