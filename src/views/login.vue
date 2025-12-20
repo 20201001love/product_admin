@@ -185,6 +185,9 @@ function handleLogin() {
         Cookies.remove("rememberMe")
       }
 
+
+      console.log(loginForm.value)
+
       // 调用 Pinia store 中的登录方法
       userStore.login(loginForm.value).then(() => {
         // 登录成功

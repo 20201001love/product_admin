@@ -86,11 +86,33 @@ export const constantRoutes = [
   },
 ]
 
-export const dynamicRoutes = []
+export const dynamicRoutes = [
+  {
+    path: '/tool/gen-edit',
+    component: Layout,
+    hidden: true,
+    permissions: ['tool:gen:edit'],
+    children: [
+      {
+        path: 'index/:tableId(\\d+)',
+        component: () => import('@/views/tool/gen/editTable'),
+        name: 'GenEdit',
+        meta: { title: '修改生成配置', activeMenu: '/tool/gen' },
+      },
+    ],
+  },
+]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [...constantRoutes],
+  routes: constantRoutes,
+  // 滚动行为
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    return { top: 0 }
+  },
 })
 
 export default router
