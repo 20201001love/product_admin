@@ -12,15 +12,15 @@
         </el-form-item>
       </el-col>
 
-<!--      <el-col :span="12">-->
-<!--        <el-form-item prop="tplWebType">-->
-<!--          <template #label>前端类型</template>-->
-<!--          <el-select v-model="info.tplWebType">-->
-<!--            <el-option label="Vue2 Element UI 模版" value="element-ui" />-->
-<!--            <el-option label="Vue3 Element Plus 模版" value="element-plus" />-->
-<!--          </el-select>-->
-<!--        </el-form-item>-->
-<!--      </el-col>-->
+      <!--      <el-col :span="12">-->
+      <!--        <el-form-item prop="tplWebType">-->
+      <!--          <template #label>前端类型</template>-->
+      <!--          <el-select v-model="info.tplWebType">-->
+      <!--            <el-option label="Vue2 Element UI 模版" value="element-ui" />-->
+      <!--            <el-option label="Vue3 Element Plus 模版" value="element-plus" />-->
+      <!--          </el-select>-->
+      <!--        </el-form-item>-->
+      <!--      </el-col>-->
 
       <el-col :span="12">
         <el-form-item prop="packageName">
@@ -91,14 +91,9 @@
               <el-icon><question-filled /></el-icon>
             </el-tooltip>
           </template>
-          <el-tree-select
-            v-model="info.parentMenuId"
-            :data="menuOptions"
-            :props="{ value: 'menuId', label: 'menuName', children: 'children' }"
-            value-key="menuId"
-            placeholder="请选择系统菜单"
-            check-strictly
-          />
+          <el-tree-select v-model="info.parentMenuId" :data="menuOptions"
+            :props="{ value: 'menuId', label: 'menuName', children: 'children' }" value-key="menuId"
+            placeholder="请选择系统菜单" check-strictly />
         </el-form-item>
       </el-col>
 
@@ -141,12 +136,8 @@
               </el-tooltip>
             </template>
             <el-select v-model="info.treeCode" placeholder="请选择">
-              <el-option
-                v-for="(column, index) in info.columns"
-                :key="index"
-                :label="column.columnName + '：' + column.columnComment"
-                :value="column.columnName"
-              ></el-option>
+              <el-option v-for="(column, index) in info.columns" :key="index"
+                :label="column.columnName + '：' + column.columnComment" :value="column.columnName"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -159,12 +150,8 @@
               </el-tooltip>
             </template>
             <el-select v-model="info.treeParentCode" placeholder="请选择">
-              <el-option
-                v-for="(column, index) in info.columns"
-                :key="index"
-                :label="column.columnName + '：' + column.columnComment"
-                :value="column.columnName"
-              ></el-option>
+              <el-option v-for="(column, index) in info.columns" :key="index"
+                :label="column.columnName + '：' + column.columnComment" :value="column.columnName"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -177,12 +164,8 @@
               </el-tooltip>
             </template>
             <el-select v-model="info.treeName" placeholder="请选择">
-              <el-option
-                v-for="(column, index) in info.columns"
-                :key="index"
-                :label="column.columnName + '：' + column.columnComment"
-                :value="column.columnName"
-              ></el-option>
+              <el-option v-for="(column, index) in info.columns" :key="index"
+                :label="column.columnName + '：' + column.columnComment" :value="column.columnName"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -201,12 +184,8 @@
               </el-tooltip>
             </template>
             <el-select v-model="info.subTableName" placeholder="请选择" @change="subSelectChange">
-              <el-option
-                v-for="(table, index) in tables"
-                :key="index"
-                :label="table.tableName + '：' + table.tableComment"
-                :value="table.tableName"
-              ></el-option>
+              <el-option v-for="(table, index) in tables" :key="index"
+                :label="table.tableName + '：' + table.tableComment" :value="table.tableName"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
@@ -219,12 +198,8 @@
               </el-tooltip>
             </template>
             <el-select v-model="info.subTableFkName" placeholder="请选择">
-              <el-option
-                v-for="(column, index) in subColumns"
-                :key="index"
-                :label="column.columnName + '：' + column.columnComment"
-                :value="column.columnName"
-              ></el-option>
+              <el-option v-for="(column, index) in subColumns" :key="index"
+                :label="column.columnName + '：' + column.columnComment" :value="column.columnName"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
