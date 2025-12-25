@@ -47,6 +47,9 @@ import {
 import Pagination from '@/components/Pagination' // 分页组件
 import RightToolbar from '@/components/RightToolbar' // 表格工具栏
 import DictTag from '@/components/DictTag'
+import FileUpload from '@/components/FileUpload'
+import ImageUpload from '@/components/ImageUpload'
+import ImagePreview from '@/components/ImagePreview'
 const app = createApp(App)
 
 /**
@@ -70,7 +73,9 @@ app.use(VxeUIAll) // VXE UI 组件
 app.component('Pagination', Pagination)
 app.component('RightToolbar', RightToolbar)
 app.component('DictTag', DictTag)
-
+app.component('FileUpload', FileUpload)
+app.component('ImageUpload', ImageUpload)
+app.component('ImagePreview', ImagePreview)
 // 注册自定义指令（如 v-hasPermi、v-copy 等）
 directive(app)
 

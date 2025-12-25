@@ -132,11 +132,17 @@ function uploadImg() {
     let formData = new FormData()
     formData.append("avatarfile", data, options.filename)
     uploadAvatar(formData).then(response => {
-      // 获取后端返回的图片 URL
-      // 如果已经是完整的 URL（http/https 开头），直接使用
-      // 否则拼接后端 API 地址
+      // 本地文件上传：后端返回的 imgUrl 应该是相对路径
+      // 需要拼接后端 API 地址来访问本地存储的图片
       let newAvatarUrl = response.imgUrl
+
+      // 如果返回的是完整 URL（http/https），直接使用（兼容处理）
+      // 否则拼接后端 API 地址（本地文件上传的标准情况）
       if (!newAvatarUrl.startsWith('http://') && !newAvatarUrl.startsWith('https://')) {
+        // 确保路径以 / 开头
+        if (!newAvatarUrl.startsWith('/')) {
+          newAvatarUrl = '/' + newAvatarUrl
+        }
         newAvatarUrl = import.meta.env.VITE_APP_BASE_API + newAvatarUrl
       }
 
