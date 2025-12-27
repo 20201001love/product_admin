@@ -5,14 +5,9 @@
       <el-form-item label="客户名" prop="customerName">
         <el-input v-model="queryParams.customerName" placeholder="请输入客户名" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间" prop="createTime">
-        <el-date-picker clearable v-model="queryParams.createTime" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择创建时间">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="更新时间" prop="updateTime">
-        <el-date-picker clearable v-model="queryParams.updateTime" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择更新时间">
+      <el-form-item label="创建时间" prop="createTime" style="width: 308px;">
+        <el-date-picker clearable v-model="dataRange" type="daterange" value-format="YYYY-MM-DD" placeholder="请选择创建时间"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期">
         </el-date-picker>
       </el-form-item>
       <el-form-item>
@@ -95,15 +90,13 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const selectedRow = ref(null)
-
+const dataRange = ref([])
 const data = reactive({
   form: {},
   queryParams: {
     pageNum: 1,
     pageSize: 10,
     customerName: null,
-    createTime: null,
-    updateTime: null,
     remark: null
   },
   rules: {
@@ -138,7 +131,7 @@ const indexMethod = (index) => {
 /** 查询客户列表 */
 const getList = () => {
   loading.value = true
-  listCustomer(queryParams.value).then(response => {
+  listCustomer(proxy.addDateRange(queryParams.value, dataRange.value)).then(response => {
     customerList.value = response.rows
     total.value = response.total
     loading.value = false
@@ -172,6 +165,7 @@ const handleQuery = () => {
 /** 重置按钮操作 */
 const resetQuery = () => {
   proxy.resetForm("queryRef")
+  dataRange.value = []
   handleQuery()
 }
 

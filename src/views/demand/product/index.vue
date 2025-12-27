@@ -5,14 +5,9 @@
       <el-form-item label="产品名称" prop="productName">
         <el-input v-model="queryParams.productName" placeholder="请输入产品名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="创建时间" prop="createTime">
-        <el-date-picker clearable v-model="queryParams.createTime" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择创建时间">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="更新时间" prop="updateTime">
-        <el-date-picker clearable v-model="queryParams.updateTime" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择更新时间">
+      <el-form-item label="创建时间" prop="createTime" style="width: 308px;">
+        <el-date-picker clearable v-model="dataRange" type="daterange" value-format="YYYY-MM-DD" placeholder="请选择创建时间"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期">
         </el-date-picker>
       </el-form-item>
       <el-form-item>
@@ -108,16 +103,14 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const selectedRow = ref(null)
-
+const dataRange = ref([])
 const data = reactive({
   form: {},
   queryParams: {
     pageNum: 1,
     pageSize: 10,
     productName: null,
-    image: null,
-    createTime: null,
-    updateTime: null
+    image: null
   },
   rules: {
     productName: [
@@ -151,7 +144,7 @@ const indexMethod = (index) => {
 /** 查询产品列表 */
 const getList = () => {
   loading.value = true
-  listProduct(queryParams.value).then(response => {
+  listProduct(proxy.addDateRange(queryParams.value, dataRange.value)).then(response => {
     productList.value = response.rows
     total.value = response.total
     loading.value = false
@@ -170,8 +163,6 @@ const reset = () => {
     productId: null,
     productName: null,
     image: null,
-    createTime: null,
-    updateTime: null
   }
   proxy.resetForm("productRef")
 }
@@ -185,6 +176,7 @@ const handleQuery = () => {
 /** 重置按钮操作 */
 const resetQuery = () => {
   proxy.resetForm("queryRef")
+  dataRange.value = []
   handleQuery()
 }
 
@@ -248,7 +240,7 @@ const handleDelete = (row) => {
 /** 导出按钮操作 */
 const handleExport = () => {
   proxy.download('product/product/export', {
-    ...queryParams.value
+    ...proxy.addDateRange(queryParams.value, dataRange.value)
   }, `product_${new Date().getTime()}.xlsx`)
 }
 

@@ -2,25 +2,18 @@
   <div class="app-container">
     <!-- 顶部搜索 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="交期" prop="dueDate">
-        <el-date-picker clearable v-model="queryParams.dueDate" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择交期">
+      <el-form-item label="交期" prop="dueDate" style="width: 308px;">
+        <el-date-picker clearable v-model="dataRange" type="daterange" value-format="YYYY-MM-DD" placeholder="请选择交期"
+          range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期">
         </el-date-picker>
       </el-form-item>
-      <el-form-item label="订单状态" prop="status" label-width="100px">
-        <el-select v-model="queryParams.status" placeholder="请选择订单状态" style="width: 180px;" clearable>
+      <el-form-item label="优先级" prop="priority">
+        <el-input v-model="queryParams.priority" placeholder="请输入优先级" clearable @keyup.enter="handleQuery" />
+      </el-form-item>
+      <el-form-item label="订单状态" prop="status" style="width: 250px;">
+        <el-select v-model="queryParams.status" placeholder="请选择订单状态" clearable>
           <el-option v-for="dict in customer_order_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
-      </el-form-item>
-      <el-form-item label="创建时间" prop="createdTime">
-        <el-date-picker clearable v-model="queryParams.createdTime" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择创建时间">
-        </el-date-picker>
-      </el-form-item>
-      <el-form-item label="更新时间" prop="updatedTime">
-        <el-date-picker clearable v-model="queryParams.updatedTime" type="date" value-format="YYYY-MM-DD"
-          placeholder="请选择更新时间">
-        </el-date-picker>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -50,7 +43,7 @@
       @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" type="index" :index="indexMethod" />
-      <el-table-column label="订单ID" align="center" prop="orderId" />
+      <el-table-column label="订单ID" align="center" prop="orderId" width="350" />
       <el-table-column label="客户" align="center" prop="customerName" />
       <el-table-column label="交期" align="center" prop="dueDate" width="180">
         <template #default="scope">
@@ -63,12 +56,11 @@
           <dict-tag :options="customer_order_status" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="450">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button type="danger" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button type="info" icon="View" @click="handleView(scope.row)">查看</el-button>
-          <el-button type="success" icon="Check" @click="handleComplete(scope.row)">完成</el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)">查看</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -78,17 +70,17 @@
       v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改订单对话框 -->
-    <vxe-modal :title="title" v-model="open" width="500px" show-maximize showFooter resize>
-      <el-form ref="orderRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="交期" prop="dueDate">
-          <el-date-picker clearable v-model="form.dueDate" type="date" value-format="YYYY-MM-DD" placeholder="请选择交期">
-          </el-date-picker>
-        </el-form-item>
+    <vxe-modal :title="title" v-model="open" width="600px" show-maximize showFooter resize>
+      <el-form ref="orderRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="客户" prop="customerId">
           <el-select v-model="form.customerId" placeholder="请选择客户">
             <el-option v-for="item in customerList" :key="item.customerId" :label="item.customerName"
               :value="item.customerId"></el-option>
           </el-select>
+        </el-form-item>
+        <el-form-item label="交期" prop="dueDate">
+          <el-date-picker clearable v-model="form.dueDate" type="date" value-format="YYYY-MM-DD" placeholder="请选择交期">
+          </el-date-picker>
         </el-form-item>
         <el-form-item label="优先级" prop="priority">
           <el-input v-model="form.priority" placeholder="请输入优先级" />
@@ -99,6 +91,41 @@
               :value="dict.value"></el-option>
           </el-select>
         </el-form-item>
+        <el-divider content-position="center">订单明细信息</el-divider>
+        <el-row :gutter="10" class="mb8">
+          <el-col :span="1.5">
+            <el-button type="primary" icon="Plus" @click="handleAddOrderLine">添加</el-button>
+          </el-col>
+          <el-col :span="1.5">
+            <el-button type="danger" icon="Delete" @click="handleDeleteOrderLine">删除</el-button>
+          </el-col>
+        </el-row>
+        <el-table :data="orderLineList" :row-class-name="rowOrderLineIndex"
+          @selection-change="handleOrderLineSelectionChange" ref="orderLine">
+          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column label="序号" align="center" prop="index" width="50" />
+          <el-table-column label="产品/SKU" prop="productId" width="150">
+            <template #default="scope">
+              <el-select v-model="scope.row.productId" placeholder="请选择产品/SKU">
+                <el-option v-for="item in productList" :key="item.productId" :label="item.productName"
+                  :value="item.productId"></el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="需求数量" prop="qty" width="150">
+            <template #default="scope">
+              <el-input v-model="scope.row.qty" placeholder="请输入需求数量" />
+            </template>
+          </el-table-column>
+          <el-table-column label="订单行状态" prop="status" width="150">
+            <template #default="scope">
+              <el-select v-model="scope.row.status" placeholder="请选择订单行状态" clearable>
+                <el-option v-for="dict in order_line_status" :key="dict.value" :label="dict.label"
+                  :value="dict.value" />
+              </el-select>
+            </template>
+          </el-table-column>
+        </el-table>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -107,31 +134,48 @@
         </div>
       </template>
     </vxe-modal>
+    <vxe-modal :title="title" v-model="viewOpen" width="520px" show-maximize showFooter resize>
+      <el-table :data="orderLineList" border>
+        <el-table-column label="序号" align="center" type="index" width="50" />
+        <el-table-column label="产品/SKU" align="center" prop="productId" width="150">
+          <template #default="scope">
+            {{ getProductName(scope.row.productId) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="需求数量" align="center" prop="qty" width="150" />
+        <el-table-column label="订单行状态" align="center" prop="status" width="150" />
+      </el-table>
+    </vxe-modal>
   </div>
 </template>
 
 <script setup name="Order">
 import { listOrder, getOrder, delOrder, addOrder, updateOrder } from "@/api/demand/order"
-import { listCustomer } from "@/api/demand/customer"
 import { getToken } from "@/utils/auth.js";
+import { listCustomer } from "@/api/demand/customer"
+import { listProduct } from "@/api/demand/product"
 const baseURL = import.meta.env.VITE_APP_BASE_API
 
 const { proxy } = getCurrentInstance()
 const { customer_order_status } = proxy.useDict('customer_order_status')
-
+const { order_line_status } = proxy.useDict('order_line_status')
 const orderList = ref([])
+const orderLineList = ref([])
 const open = ref(false)
+const viewOpen = ref(false)
 const loading = ref(true)
 const showSearch = ref(true)
 const ids = ref([])
+const checkedOrderLine = ref([])
 const single = ref(true)
 const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const selectedRow = ref(null)
-
+const dataRange = ref([])
 const data = reactive({
   customerList: [],
+  productList: [],
   form: {},
   queryParams: {
     pageNum: 1,
@@ -140,23 +184,21 @@ const data = reactive({
     dueDate: null,
     priority: null,
     status: null,
-    createdTime: null,
-    updatedTime: null
   },
   rules: {
     customerId: [
-      { required: true, message: "客户ID不能为空", trigger: "change" }
+      { required: true, message: "客户不能为空", trigger: "change" }
     ],
     dueDate: [
       { required: true, message: "交期不能为空", trigger: "blur" }
     ],
     status: [
-      { required: true, message: "订单状态不能为空", trigger: "change" }
+      { required: true, message: "订单状态", trigger: "change" }
     ],
   }
 })
 
-const { queryParams, form, rules, customerList } = toRefs(data)
+const { queryParams, form, rules, customerList, productList } = toRefs(data)
 
 //点击行 获取行
 const clickRow = (row) => {
@@ -181,7 +223,7 @@ const indexMethod = (index) => {
 /** 查询订单列表 */
 const getList = () => {
   loading.value = true
-  listOrder(queryParams.value).then(response => {
+  listOrder(proxy.addDateRange(queryParams.value, dataRange.value)).then(response => {
     orderList.value = response.rows
     total.value = response.total
     loading.value = false
@@ -202,9 +244,8 @@ const reset = () => {
     dueDate: null,
     priority: null,
     status: null,
-    createdTime: null,
-    updatedTime: null
   }
+  orderLineList.value = []
   proxy.resetForm("orderRef")
 }
 
@@ -217,6 +258,7 @@ const handleQuery = () => {
 /** 重置按钮操作 */
 const resetQuery = () => {
   proxy.resetForm("queryRef")
+  dataRange.value = []
   handleQuery()
 }
 
@@ -240,10 +282,7 @@ const handleUpdate = (row) => {
   const _orderId = row.orderId || ids.value
   getOrder(_orderId).then(response => {
     form.value = response.data
-    // 确保 customerId 的类型与 customerList 中的类型一致
-    // Element Plus 的 el-select 使用严格相等比较，类型不匹配会导致显示 value 而不是 label
     if (form.value.customerId !== null && form.value.customerId !== undefined && customerList.value.length > 0) {
-      // 根据 customerList 中第一个元素的 customerId 类型来转换
       const firstCustomerId = customerList.value[0].customerId
       if (typeof firstCustomerId === 'number') {
         form.value.customerId = Number(form.value.customerId)
@@ -251,6 +290,17 @@ const handleUpdate = (row) => {
         form.value.customerId = String(form.value.customerId)
       }
     }
+    orderLineList.value = response.data.orderLineList
+    orderLineList.value.forEach(item => {
+      if (item.productId !== null && item.productId !== undefined && productList.value.length > 0) {
+        const firstProductId = productList.value[0].productId
+        if (typeof firstProductId === 'number') {
+          item.productId = Number(item.productId)
+        } else if (typeof firstProductId === 'string') {
+          item.productId = String(item.productId)
+        }
+      }
+    })
     open.value = true
     title.value = "修改订单"
   })
@@ -260,6 +310,7 @@ const handleUpdate = (row) => {
 const submitForm = () => {
   proxy.$refs["orderRef"].validate(valid => {
     if (valid) {
+      form.value.orderLineList = orderLineList.value
       if (form.value.orderId != null) {
         updateOrder(form.value).then(response => {
           proxy.$modal.msgSuccess("修改成功")
@@ -288,39 +339,92 @@ const handleDelete = (row) => {
   }).catch(() => { })
 }
 
+/** 订单明细序号 */
+const rowOrderLineIndex = ({ row, rowIndex }) => {
+  row.index = rowIndex + 1
+}
+
+/** 订单明细添加按钮操作 */
+const handleAddOrderLine = () => {
+  let obj = {}
+  obj.orderId = form.value.orderId
+  obj.productId = ""
+  obj.qty = ""
+  obj.status = ""
+  orderLineList.value.push(obj)
+}
+
+/** 订单明细删除按钮操作 */
+const handleDeleteOrderLine = () => {
+  if (checkedOrderLine.value.length == 0) {
+    proxy.$modal.msgError("请先选择要删除的订单明细数据")
+  } else {
+    const orderLines = orderLineList.value
+    const checkedOrderLines = checkedOrderLine.value
+    orderLineList.value = orderLines.filter(function (item) {
+      return checkedOrderLines.indexOf(item.index) == -1
+    })
+  }
+}
+
+/** 复选框选中数据 */
+const handleOrderLineSelectionChange = (selection) => {
+  checkedOrderLine.value = selection.map(item => item.index)
+}
+
 /** 导出按钮操作 */
 const handleExport = () => {
   proxy.download('demand/order/export', {
-    ...queryParams.value
+    ...proxy.addDateRange(queryParams.value, dataRange.value)
   }, `order_${new Date().getTime()}.xlsx`)
 }
 
+/** 查看按钮操作 */
+const handleView = (row) => {
+  getOrder(row.orderId).then(response => {
+    orderLineList.value = response.data.orderLineList
+    orderLineList.value.forEach(item => {
+      if (item.productId !== null && item.productId !== undefined && productList.value.length > 0) {
+        const firstProductId = productList.value[0].productId
+        if (typeof firstProductId === 'number') {
+          item.productId = Number(item.productId)
+        } else if (typeof firstProductId === 'string') {
+          item.productId = String(item.productId)
+        }
+      }
+    })
+    viewOpen.value = true
+    title.value = "查看订单"
+  })
+}
+
+// 根据产品ID获取产品名称
+const getProductName = (productId) => {
+  if (!productId || !productList.value || productList.value.length === 0) {
+    return productId || '-'
+  }
+  const product = productList.value.find(item => {
+    // 处理类型不匹配的情况
+    return item.productId == productId || String(item.productId) === String(productId) || Number(item.productId) === Number(productId)
+  })
+  return product ? product.productName : productId
+}
+
+// 获取客户列表
 const getCustomerList = () => {
   listCustomer().then(response => {
     customerList.value = response.rows
   })
 }
 
-const handleComplete = (row) => {
-  proxy.$modal.confirm('是否确认完成该订单？').then(function () {
-    return completeOrder(row.orderId)
-  }).then(() => {
-    getList()
-    proxy.$modal.msgSuccess("订单已经完成")
-  }).catch(() => {
-    proxy.$modal.msgError("请查看订单状态是否已经完成")
+// 获取产品列表
+const getProductList = () => {
+  listProduct().then(response => {
+    productList.value = response.rows
   })
 }
-
-const completeOrder = (orderId) => {
-  return updateOrder({ orderId: orderId, status: 'DONE' }).then(() => {
-  }).then(() => {
-    getList()
-  }).catch(() => {
-  })
-}
-
 
 getList()
 getCustomerList()
+getProductList()
 </script>
