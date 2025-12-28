@@ -43,7 +43,13 @@
       @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" type="index" :index="indexMethod" />
-      <el-table-column label="订单ID" align="center" prop="orderId" width="350" />
+      <el-table-column label="订单ID" align="center" prop="orderId" width="350">
+        <template #default="scope">
+          <router-link :to="'/demand/order/orderLine/' + scope.row.orderId" class="link-type">
+            <span>{{ scope.row.orderId }}</span>
+          </router-link>
+        </template>
+      </el-table-column>
       <el-table-column label="客户" align="center" prop="customerName" />
       <el-table-column label="交期" align="center" prop="dueDate" width="180">
         <template #default="scope">
@@ -134,16 +140,22 @@
         </div>
       </template>
     </vxe-modal>
-    <vxe-modal :title="title" v-model="viewOpen" width="520px" show-maximize showFooter resize>
+
+    <vxe-modal :title="title" v-model="viewOpen" width="850px" show-maximize showFooter resize>
       <el-table :data="orderLineList" border>
         <el-table-column label="序号" align="center" type="index" width="50" />
+        <el-table-column label="订单行ID" align="center" prop="orderLineId" width="350" />
         <el-table-column label="产品/SKU" align="center" prop="productId" width="150">
           <template #default="scope">
             {{ getProductName(scope.row.productId) }}
           </template>
         </el-table-column>
         <el-table-column label="需求数量" align="center" prop="qty" width="150" />
-        <el-table-column label="订单行状态" align="center" prop="status" width="150" />
+        <el-table-column label="订单行状态" align="center" prop="status" width="150">
+          <template #default="scope">
+            <dict-tag :options="order_line_status" :value="scope.row.status" />
+          </template>
+        </el-table-column>
       </el-table>
     </vxe-modal>
   </div>
@@ -153,8 +165,10 @@
 import { listOrder, getOrder, delOrder, addOrder, updateOrder } from "@/api/demand/order"
 import { getToken } from "@/utils/auth.js";
 import { listCustomer } from "@/api/demand/customer"
-import { listProduct } from "@/api/demand/product"
+import useProductStore from '@/stores/modules/product'
+
 const baseURL = import.meta.env.VITE_APP_BASE_API
+const productStore = useProductStore()
 
 const { proxy } = getCurrentInstance()
 const { customer_order_status } = proxy.useDict('customer_order_status')
@@ -175,7 +189,6 @@ const selectedRow = ref(null)
 const dataRange = ref([])
 const data = reactive({
   customerList: [],
-  productList: [],
   form: {},
   queryParams: {
     pageNum: 1,
@@ -198,7 +211,9 @@ const data = reactive({
   }
 })
 
-const { queryParams, form, rules, customerList, productList } = toRefs(data)
+const { queryParams, form, rules, customerList } = toRefs(data)
+// 使用产品仓库中的产品列表
+const productList = computed(() => productStore.productList)
 
 //点击行 获取行
 const clickRow = (row) => {
@@ -417,14 +432,6 @@ const getCustomerList = () => {
   })
 }
 
-// 获取产品列表
-const getProductList = () => {
-  listProduct().then(response => {
-    productList.value = response.rows
-  })
-}
-
 getList()
 getCustomerList()
-getProductList()
 </script>

@@ -115,6 +115,20 @@ export const dynamicRoutes = [
       },
     ],
   },
+  {
+    path: '/demand/order/orderLine',
+    component: Layout,
+    hidden: true,
+    permissions: ['demand:orderLine:list'],
+    children: [
+      {
+        path: ':orderId',
+        component: () => import('@/views/demand/order/orderLine'),
+        name: 'OrderLineByOrder',
+        meta: { title: '订单行列表', activeMenu: '/demand/order' },
+      },
+    ],
+  },
 ]
 
 const router = createRouter({

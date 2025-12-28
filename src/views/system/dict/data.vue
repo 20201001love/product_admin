@@ -38,7 +38,7 @@
           v-hasPermi="['system:dict:export']">导出</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="warning" plain icon="Close" @click="handleClose">关闭</el-button>
+        <el-button type="danger" icon="Close" @click="handleClose">关闭</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -108,7 +108,7 @@
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label
-              }}</el-radio>
+            }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">

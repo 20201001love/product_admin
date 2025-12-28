@@ -89,7 +89,10 @@
 <script setup name="Product">
 import { listProduct, getProduct, delProduct, addProduct, updateProduct } from "@/api/demand/product"
 import { getToken } from "@/utils/auth.js";
+import useProductStore from '@/stores/modules/product'
+
 const baseURL = import.meta.env.VITE_APP_BASE_API
+const productStore = useProductStore()
 
 const { proxy } = getCurrentInstance()
 
@@ -148,6 +151,8 @@ const getList = () => {
     productList.value = response.rows
     total.value = response.total
     loading.value = false
+    // 同时更新产品仓库（不带分页和筛选条件的完整列表）
+    productStore.getProductList()
   })
 }
 
@@ -214,12 +219,21 @@ const submitForm = () => {
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
+          // 同步更新产品仓库
+          productStore.updateProduct(form.value)
         })
       } else {
         addProduct(form.value).then(response => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()
+          // 同步添加到产品仓库
+          if (response.data) {
+            productStore.addProduct(response.data)
+          } else {
+            // 如果后端未返回完整数据，重新获取产品列表
+            productStore.getProductList()
+          }
         })
       }
     }
@@ -234,6 +248,8 @@ const handleDelete = (row) => {
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("删除成功")
+    // 同步从产品仓库删除
+    productStore.deleteProduct(_productIds)
   }).catch(() => { })
 }
 

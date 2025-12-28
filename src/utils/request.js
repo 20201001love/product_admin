@@ -98,12 +98,10 @@ service.interceptors.request.use(
      *
      * 原因：某些后端接口需要查询参数在 URL 中，而不是在 params 对象中
      */
+    // get请求映射params参数
     if (config.method === 'get' && config.params) {
-      // 将 params 对象转换为查询字符串并拼接到 URL
       let url = config.url + '?' + tansParams(config.params)
-      // 移除末尾可能多余的字符（tansParams 可能返回带 & 的字符串）
       url = url.slice(0, -1)
-      // 清空 params，因为已经拼接到 URL 中了
       config.params = {}
       config.url = url
     }
