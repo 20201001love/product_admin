@@ -33,7 +33,7 @@ import elementIcons from '@/components/SvgIcon/svgicon'
 import './permission' // 导入路由权限守卫
 
 // 全局工具函数
-import { useDict } from '@/utils/dict'
+import { useDict, useEditableDict } from '@/utils/dict'
 import {
   parseTime,
   resetForm,
@@ -56,7 +56,8 @@ const app = createApp(App)
  * 挂载全局方法和工具函数
  * 这些方法可以在任何组件中通过 this.xxx 或 getCurrentInstance().appContext.config.globalProperties.xxx 访问
  */
-app.config.globalProperties.useDict = useDict // 字典工具
+app.config.globalProperties.useDict = useDict // 字典工具（所有项）
+app.config.globalProperties.useEditableDict = useEditableDict // 字典工具（仅可编辑项）
 app.config.globalProperties.download = download // 文件下载
 app.config.globalProperties.parseTime = parseTime // 时间格式化
 app.config.globalProperties.resetForm = resetForm // 表单重置

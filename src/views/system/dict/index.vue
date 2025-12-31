@@ -100,7 +100,7 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label
+            <el-radio v-for="dict in sys_normal_disable_editable" :key="dict.value" :value="dict.value">{{ dict.label
               }}</el-radio>
           </el-radio-group>
         </el-form-item>
@@ -123,7 +123,10 @@ import useDictStore from '@/stores/modules/dict'
 import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type"
 
 const { proxy } = getCurrentInstance()
+// 用于搜索筛选和显示（包含所有状态，含只读）
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
+// 用于表单编辑（只包含可编辑状态，过滤只读）
+const { sys_normal_disable: sys_normal_disable_editable } = proxy.useEditableDict("sys_normal_disable")
 
 const typeList = ref([])
 const open = ref(false)

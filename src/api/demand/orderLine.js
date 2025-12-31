@@ -5,7 +5,7 @@ export function listOrderLine(query) {
   return request({
     url: '/demand/orderLine/list',
     method: 'get',
-    params: query
+    params: query,
   })
 }
 
@@ -13,7 +13,7 @@ export function listOrderLine(query) {
 export function getOrderLine(orderLineId) {
   return request({
     url: '/demand/orderLine/' + orderLineId,
-    method: 'get'
+    method: 'get',
   })
 }
 
@@ -22,7 +22,7 @@ export function addOrderLine(data) {
   return request({
     url: '/demand/orderLine',
     method: 'post',
-    data: data
+    data: data,
   })
 }
 
@@ -31,7 +31,7 @@ export function updateOrderLine(data) {
   return request({
     url: '/demand/orderLine',
     method: 'put',
-    data: data
+    data: data,
   })
 }
 
@@ -39,6 +39,22 @@ export function updateOrderLine(data) {
 export function delOrderLine(orderLineId) {
   return request({
     url: '/demand/orderLine/' + orderLineId,
-    method: 'delete'
+    method: 'delete',
+  })
+}
+
+// 发布订单明细
+export function releaseOrderLine(orderLineId) {
+  return request({
+    url: '/demand/orderLine/release/' + orderLineId,
+    method: 'put',
+  })
+}
+
+// 取消发布订单明细
+export function cancelReleaseOrderLine(orderLineId) {
+  return request({
+    url: '/demand/orderLine/cancelRelease/' + orderLineId,
+    method: 'put',
   })
 }

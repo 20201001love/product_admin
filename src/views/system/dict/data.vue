@@ -15,6 +15,12 @@
           <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="读写权限" prop="isReadonly">
+        <el-select v-model="queryParams.isReadonly" placeholder="读写权限" clearable style="width: 200px">
+          <el-option label="读写" value="1" />
+          <el-option label="只读" value="0" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -62,6 +68,13 @@
           <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
         </template>
       </el-table-column>
+      <el-table-column label="读写权限" align="center" prop="isReadonly" width="100">
+        <template #default="scope">
+          <el-tag :type="scope.row.isReadonly === '0' ? 'info' : 'success'">
+            {{ scope.row.isReadonly === '0' ? '只读' : '读写' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template #default="scope">
@@ -107,8 +120,14 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label
+            <el-radio v-for="dict in sys_normal_disable_editable" :key="dict.value" :value="dict.value">{{ dict.label
             }}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="读写权限" prop="isReadonly">
+          <el-radio-group v-model="form.isReadonly">
+            <el-radio value="1">读写</el-radio>
+            <el-radio value="0">只读</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
@@ -131,7 +150,10 @@ import { optionselect as getDictOptionselect, getType } from "@/api/system/dict/
 import { listData, getData, delData, addData, updateData } from "@/api/system/dict/data"
 
 const { proxy } = getCurrentInstance()
+// 用于搜索筛选和显示（包含所有状态，含只读）
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
+// 用于表单编辑（只包含可编辑状态，过滤只读）
+const { sys_normal_disable: sys_normal_disable_editable } = proxy.useEditableDict("sys_normal_disable")
 
 const dataList = ref([])
 const open = ref(false)
@@ -162,7 +184,8 @@ const data = reactive({
     pageSize: 10,
     dictType: undefined,
     dictLabel: undefined,
-    status: undefined
+    status: undefined,
+    isReadonly: undefined
   },
   rules: {
     dictLabel: [{ required: true, message: "数据标签不能为空", trigger: "blur" }],
@@ -215,6 +238,7 @@ function reset() {
     listClass: "default",
     dictSort: 0,
     status: "0",
+    isReadonly: "1", // 默认为读写
     remark: undefined
   }
   proxy.resetForm("dataRef")

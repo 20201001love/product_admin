@@ -61,6 +61,11 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)">查看</el-button>
+          <el-button v-if="scope.row.status === 'NEW'" link type="primary" icon="Check"
+            @click="handleRelease(scope.row)" v-hasPermi="['demand:order:edit']">发布</el-button>
+          <el-button v-if="scope.row.status === 'RELEASED'" link type="primary" icon="Close"
+            @click="handleCancelRelease(scope.row)" v-hasPermi="['demand:order:edit']">取消</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
@@ -86,11 +91,6 @@
         <el-form-item label="需求数量" prop="qty">
           <el-input v-model="form.qty" placeholder="请输入需求数量" />
         </el-form-item>
-        <el-form-item label="订单行状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择订单行状态">
-            <el-option v-for="dict in order_line_status" :key="dict.value" :label="dict.label" :value="dict.value" />
-          </el-select>
-        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -99,20 +99,47 @@
         </div>
       </template>
     </vxe-modal>
+    <!-- 查看订单行批次对话框 -->
+    <vxe-modal :title="title" v-model="viewOpen" width="850px" show-maximize showFooter resize>
+      <el-table :data="productionBatchList" border>
+        <el-table-column label="序号" align="center" type="index" width="50" />
+        <el-table-column label="批次数量" align="center" prop="batchQty" width="150" />
+        <el-table-column label="批次状态" align="center" prop="status" width="150">
+          <template #default="scope">
+            <dict-tag :options="production_batch_status" :value="scope.row.status" />
+          </template>
+        </el-table-column>
+        <el-table-column label="预计开工" align="center" prop="plannedStart" width="150">
+          <template #default="scope">
+            {{ parseTime(scope.row.plannedStart, '{y}-{m}-{d}') }}
+          </template>
+        </el-table-column>
+        <el-table-column label="预计完工" align="center" prop="plannedEnd" width="150">
+          <template #default="scope">
+            {{ parseTime(scope.row.plannedEnd, '{y}-{m}-{d}') }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </vxe-modal>
   </div>
 </template>
 
 <script setup name="OrderLine">
-import { listOrderLine, getOrderLine, delOrderLine, addOrderLine, updateOrderLine } from "@/api/demand/orderLine"
+import { listOrderLine, getOrderLine, delOrderLine, addOrderLine, updateOrderLine, releaseOrderLine, cancelReleaseOrderLine } from "@/api/demand/orderLine"
 import useProductStore from '@/stores/modules/product'
 import { getToken } from "@/utils/auth.js";
+import { parseTime } from "@/utils/huacai";
 
 const baseURL = import.meta.env.VITE_APP_BASE_API
 const productStore = useProductStore()
 const route = useRoute()
 
 const { proxy } = getCurrentInstance()
+// 用于搜索筛选和显示（包含所有状态，含只读）
 const { order_line_status } = proxy.useDict('order_line_status')
+const { production_batch_status } = proxy.useDict('production_batch_status')
+// 用于表单编辑（只包含可编辑状态，过滤只读）
+const { order_line_status: order_line_status_editable } = proxy.useEditableDict('order_line_status')
 const orderLineList = ref([])
 const productionBatchList = ref([])
 const open = ref(false)
@@ -125,7 +152,7 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const selectedRow = ref(null)
-
+const viewOpen = ref(false)
 const data = reactive({
   form: {},
   queryParams: {
@@ -248,11 +275,34 @@ const handleUpdate = (row) => {
   })
 }
 
+/** 查看按钮操作 */
+const handleView = (row) => {
+  getOrderLine(row.orderLineId).then(response => {
+    productionBatchList.value = response.data.productionBatchList
+    viewOpen.value = true
+    title.value = "查看批次"
+  })
+}
+/** 发布按钮操作 */
+const handleRelease = (row) => {
+  const _orderLineId = row.orderLineId || ids.value
+  releaseOrderLine(_orderLineId).then(response => {
+    proxy.$modal.msgSuccess("发布成功")
+    getList()
+  })
+}
+/** 取消发布按钮操作 */
+const handleCancelRelease = (row) => {
+  const _orderLineId = row.orderLineId || ids.value
+  cancelReleaseOrderLine(_orderLineId).then(response => {
+    proxy.$modal.msgSuccess("取消发布成功")
+    getList()
+  })
+}
 /** 提交按钮 */
 const submitForm = () => {
   proxy.$refs["orderLineRef"].validate(valid => {
     if (valid) {
-      form.value.productionBatchList = productionBatchList.value
       if (form.value.orderLineId != null) {
         updateOrderLine(form.value).then(response => {
           proxy.$modal.msgSuccess("修改成功")

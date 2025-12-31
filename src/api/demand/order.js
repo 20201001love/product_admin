@@ -5,7 +5,7 @@ export function listOrder(query) {
   return request({
     url: '/demand/order/list',
     method: 'get',
-    params: query
+    params: query,
   })
 }
 
@@ -13,7 +13,7 @@ export function listOrder(query) {
 export function getOrder(orderId) {
   return request({
     url: '/demand/order/' + orderId,
-    method: 'get'
+    method: 'get',
   })
 }
 
@@ -22,7 +22,7 @@ export function addOrder(data) {
   return request({
     url: '/demand/order',
     method: 'post',
-    data: data
+    data: data,
   })
 }
 
@@ -31,7 +31,7 @@ export function updateOrder(data) {
   return request({
     url: '/demand/order',
     method: 'put',
-    data: data
+    data: data,
   })
 }
 
@@ -39,6 +39,22 @@ export function updateOrder(data) {
 export function delOrder(orderId) {
   return request({
     url: '/demand/order/' + orderId,
-    method: 'delete'
+    method: 'delete',
+  })
+}
+
+// 确认订单
+export function checkOrder(orderId) {
+  return request({
+    url: '/demand/order/check/' + orderId,
+    method: 'put',
+  })
+}
+
+// 取消确认订单
+export function cancelCheckOrder(orderId) {
+  return request({
+    url: '/demand/order/cancelCheck/' + orderId,
+    method: 'put',
   })
 }

@@ -65,6 +65,10 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)">查看</el-button>
+          <el-button v-if="scope.row.status === 'NEW'" link type="primary" icon="Check" @click="handleCheck(scope.row)"
+            v-hasPermi="['demand:order:edit']">确认</el-button>
+          <el-button v-if="scope.row.status === 'CONFIRMED'" link type="primary" icon="Close"
+            @click="handleCancelCheck(scope.row)" v-hasPermi="['demand:order:edit']">取消</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
@@ -91,47 +95,6 @@
         <el-form-item label="优先级" prop="priority">
           <el-input v-model="form.priority" placeholder="请输入优先级" />
         </el-form-item>
-        <el-form-item label="订单状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择订单状态">
-            <el-option v-for="dict in customer_order_status" :key="dict.value" :label="dict.label"
-              :value="dict.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-divider content-position="center">订单明细信息</el-divider>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button type="primary" icon="Plus" @click="handleAddOrderLine">添加</el-button>
-          </el-col>
-          <el-col :span="1.5">
-            <el-button type="danger" icon="Delete" @click="handleDeleteOrderLine">删除</el-button>
-          </el-col>
-        </el-row>
-        <el-table :data="orderLineList" :row-class-name="rowOrderLineIndex"
-          @selection-change="handleOrderLineSelectionChange" ref="orderLine">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column label="序号" align="center" prop="index" width="50" />
-          <el-table-column label="产品/SKU" prop="productId" width="150">
-            <template #default="scope">
-              <el-select v-model="scope.row.productId" placeholder="请选择产品/SKU">
-                <el-option v-for="item in productList" :key="item.productId" :label="item.productName"
-                  :value="item.productId"></el-option>
-              </el-select>
-            </template>
-          </el-table-column>
-          <el-table-column label="需求数量" prop="qty" width="150">
-            <template #default="scope">
-              <el-input v-model="scope.row.qty" placeholder="请输入需求数量" />
-            </template>
-          </el-table-column>
-          <el-table-column label="订单行状态" prop="status" width="150">
-            <template #default="scope">
-              <el-select v-model="scope.row.status" placeholder="请选择订单行状态" clearable>
-                <el-option v-for="dict in order_line_status" :key="dict.value" :label="dict.label"
-                  :value="dict.value" />
-              </el-select>
-            </template>
-          </el-table-column>
-        </el-table>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -162,7 +125,7 @@
 </template>
 
 <script setup name="Order">
-import { listOrder, getOrder, delOrder, addOrder, updateOrder } from "@/api/demand/order"
+import { listOrder, getOrder, delOrder, addOrder, updateOrder, checkOrder, cancelCheckOrder } from "@/api/demand/order"
 import { getToken } from "@/utils/auth.js";
 import { listCustomer } from "@/api/demand/customer"
 import useProductStore from '@/stores/modules/product'
@@ -171,8 +134,12 @@ const baseURL = import.meta.env.VITE_APP_BASE_API
 const productStore = useProductStore()
 
 const { proxy } = getCurrentInstance()
+// 用于搜索筛选和显示（包含所有状态，含只读）
 const { customer_order_status } = proxy.useDict('customer_order_status')
 const { order_line_status } = proxy.useDict('order_line_status')
+// 用于表单编辑（只包含可编辑状态，过滤只读）
+const { customer_order_status: customer_order_status_editable } = proxy.useEditableDict('customer_order_status')
+const { order_line_status: order_line_status_editable } = proxy.useEditableDict('order_line_status')
 const orderList = ref([])
 const orderLineList = ref([])
 const open = ref(false)
@@ -321,11 +288,27 @@ const handleUpdate = (row) => {
   })
 }
 
+/** 确认按钮操作 */
+const handleCheck = (row) => {
+  const _orderId = row.orderId || ids.value
+  checkOrder(_orderId).then(response => {
+    proxy.$modal.msgSuccess("确认成功")
+    getList()
+  })
+}
+
+/** 取消确认按钮操作 */
+const handleCancelCheck = (row) => {
+  const _orderId = row.orderId || ids.value
+  cancelCheckOrder(_orderId).then(response => {
+    proxy.$modal.msgSuccess("取消确认成功")
+    getList()
+  })
+}
 /** 提交按钮 */
 const submitForm = () => {
   proxy.$refs["orderRef"].validate(valid => {
     if (valid) {
-      form.value.orderLineList = orderLineList.value
       if (form.value.orderId != null) {
         updateOrder(form.value).then(response => {
           proxy.$modal.msgSuccess("修改成功")
@@ -409,7 +392,7 @@ const handleView = (row) => {
       }
     })
     viewOpen.value = true
-    title.value = "查看订单"
+    title.value = "订单明细"
   })
 }
 

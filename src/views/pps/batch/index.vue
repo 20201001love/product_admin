@@ -6,10 +6,10 @@
         <!-- <el-icon class="search-icon">
           <Search />
         </el-icon> -->
-        <el-input v-model="queryParams.orderId" placeholder="搜索订单ID..." clearable @keyup.enter="handleQuery"
-          @clear="handleQuery" class="modern-search-input" size="large">
+        <el-input v-model="queryParams.orderId" placeholder="搜索订单ID..." @keyup.enter="handleOrderIdSearch"
+          class="modern-search-input" size="large">
           <template #suffix>
-            <el-button type="primary" @click="handleQuery" class="search-button" circle>
+            <el-button type="primary" @click="handleOrderIdSearch" class="search-button" circle>
               <el-icon>
                 <Search />
               </el-icon>
@@ -32,7 +32,8 @@
       </el-form-item>
       <el-form-item label="批次状态" prop="status" style="width: 220px">
         <el-select v-model="queryParams.status" placeholder="请选择批次状态" clearable>
-          <el-option v-for="dict in order_line_status" :key="dict.value" :label="dict.label" :value="dict.value" />
+          <el-option v-for="dict in production_batch_status" :key="dict.value" :label="dict.label"
+            :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="计划开工" style="width: 308px">
@@ -90,8 +91,9 @@
       <el-table @row-click="clickRow" ref="table" highlight-current-row border v-loading="loading" :data="batchList"
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="序号" align="center" type="index" :index="indexMethod" />
-        <el-table-column label="订单ID" align="center" prop="orderId" />
+        <el-table-column label="序号" align="center" type="index" :index="indexMethod" width="50" />
+        <el-table-column label="批次ID" align="center" prop="batchId" width="200" />
+        <el-table-column label="订单ID" align="center" prop="orderId" width="200" />
         <el-table-column label="订单行ID" align="center" prop="orderLineId" />
         <el-table-column label="产品" align="center" prop="productName" />
         <el-table-column label="批次数量" align="center" prop="batchQty" />
@@ -102,7 +104,7 @@
         </el-table-column>
         <el-table-column label="批次状态" align="center" prop="status">
           <template #default="scope">
-            <dict-tag :options="order_line_status" :value="scope.row.status" />
+            <dict-tag :options="production_batch_status" :value="scope.row.status" />
           </template>
         </el-table-column>
         <el-table-column label="计划开工" align="center" prop="plannedStart" width="180">
@@ -115,10 +117,16 @@
             <span>{{ parseTime(scope.row.plannedEnd, '{y}-{m}-{d}') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
           <template #default="scope">
-            <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
-            <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button v-if="scope.row.status === 'PLANNED'" link type="primary" icon="Check"
+              @click="handleRelease(scope.row)" v-hasPermi="['pps:batch:edit']">发布</el-button>
+            <el-button v-if="scope.row.status === 'RELEASED'" link type="primary" icon="Close"
+              @click="handleCancelRelease(scope.row)" v-hasPermi="['pps:batch:edit']">取消</el-button>
+            <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+              v-hasPermi="['pps:batch:edit']">修改</el-button>
+            <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+              v-hasPermi="['pps:batch:delete']">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -135,12 +143,6 @@
           </el-form-item>
           <el-form-item label="批次数量" prop="batchQty">
             <el-input v-model="form.batchQty" placeholder="请输入批次数量" />
-          </el-form-item>
-          <el-form-item label="批次状态" prop="status">
-            <el-radio-group v-model="form.status">
-              <el-radio v-for="dict in order_line_status" :key="dict.value" :label="dict.value">{{ dict.label
-              }}</el-radio>
-            </el-radio-group>
           </el-form-item>
           <el-form-item label="计划开工" prop="plannedStart">
             <el-date-picker clearable v-model="form.plannedStart" type="date" value-format="YYYY-MM-DD"
@@ -165,8 +167,9 @@
       <el-dialog v-model="orderLineSelectOpen" title="选择订单行" width="900px" append-to-body>
         <el-form :model="orderLineQuery" ref="orderLineQueryRef" :inline="true" label-width="80px">
           <el-form-item label="订单ID" prop="orderId">
-            <el-input v-model="orderLineQuery.orderId" placeholder="请输入订单ID" clearable
-              @keyup.enter="getOrderLineList" />
+            <el-input v-model="orderLineQuery.orderId" :placeholder="queryParams.orderId ? '已从搜索框锁定订单ID' : '请输入订单ID'"
+              clearable @keyup.enter="getOrderLineList"
+              :disabled="queryParams.orderId !== null && queryParams.orderId !== ''" />
           </el-form-item>
           <el-form-item label="订单行ID" prop="orderLineId">
             <el-input v-model="orderLineQuery.orderLineId" placeholder="请输入订单行ID" clearable
@@ -190,7 +193,7 @@
           <el-table-column label="需求数量" align="center" prop="qty" width="120" />
           <el-table-column label="订单行状态" align="center" prop="status" width="120">
             <template #default="scope">
-              <dict-tag :options="order_line_status" :value="scope.row.status" />
+              <dict-tag :options="production_batch_status" :value="scope.row.status" />
             </template>
           </el-table-column>
         </el-table>
@@ -204,7 +207,7 @@
 
 <script setup name="Batch">
 import { Search } from '@element-plus/icons-vue'
-import { listBatch, getBatch, delBatch, addBatch, updateBatch } from "@/api/pps/batch"
+import { listBatch, getBatch, delBatch, addBatch, updateBatch, releaseBatch, cancelReleaseBatch } from "@/api/pps/batch"
 import { listOrderLine } from "@/api/demand/orderLine"
 import { getToken } from "@/utils/auth.js";
 import useCustomerStore from '@/stores/modules/customer'
@@ -214,7 +217,7 @@ const productStore = useProductStore()
 const baseURL = import.meta.env.VITE_APP_BASE_API
 
 const { proxy } = getCurrentInstance()
-const { order_line_status } = proxy.useDict('order_line_status')
+const { production_batch_status } = proxy.useDict('production_batch_status')
 const productList = computed(() => productStore.productList)
 const batchList = ref([])
 const open = ref(false)
@@ -246,6 +249,7 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
+    orderId: null,
     orderLineId: null,
     batchQty: null,
     status: null,
@@ -327,6 +331,13 @@ const reset = () => {
   proxy.resetForm("batchRef")
 }
 
+/** 订单ID搜索操作 */
+const handleOrderIdSearch = () => {
+  // 当订单ID搜索时，清除订单行ID筛选
+  queryParams.value.orderLineId = null
+  handleQuery()
+}
+
 /** 搜索按钮操作 */
 const handleQuery = () => {
   queryParams.value.pageNum = 1
@@ -349,6 +360,10 @@ const getProductName = (productId) => {
 
 /** 打开订单行选择器 */
 const openOrderLineSelector = () => {
+  // 如果主搜索框有订单ID，则自动填充并锁定
+  orderLineQuery.orderId = queryParams.value.orderId || null
+  orderLineQuery.orderLineId = null
+  orderLineQuery.pageNum = 1
   orderLineSelectOpen.value = true
   getOrderLineList()
 }
@@ -356,6 +371,7 @@ const openOrderLineSelector = () => {
 /** 获取订单行列表 */
 const getOrderLineList = () => {
   orderLineLoading.value = true
+  // orderLineQuery.orderId 已经在 openOrderLineSelector 或 resetOrderLineQuery 中设置
   listOrderLine(orderLineQuery).then(response => {
     orderLineList.value = response.rows
     orderLineTotal.value = response.total
@@ -365,7 +381,8 @@ const getOrderLineList = () => {
 
 /** 重置订单行查询 */
 const resetOrderLineQuery = () => {
-  orderLineQuery.orderId = null
+  // 如果主搜索框有订单ID，则保留；否则清空
+  orderLineQuery.orderId = queryParams.value.orderId || null
   orderLineQuery.orderLineId = null
   orderLineQuery.pageNum = 1
   getOrderLineList()
@@ -404,6 +421,23 @@ const handleUpdate = (row) => {
   })
 }
 
+/** 释放按钮操作 */
+const handleRelease = (row) => {
+  const _batchId = row.batchId || ids.value
+  releaseBatch(_batchId).then(response => {
+    proxy.$modal.msgSuccess("释放成功")
+    getList()
+  })
+}
+
+/** 取消释放按钮操作 */
+const handleCancelRelease = (row) => {
+  const _batchId = row.batchId || ids.value
+  cancelReleaseBatch(_batchId).then(response => {
+    proxy.$modal.msgSuccess("取消释放成功")
+    getList()
+  })
+}
 /** 提交按钮 */
 const submitForm = () => {
   proxy.$refs["batchRef"].validate(valid => {
@@ -442,6 +476,14 @@ const handleExport = () => {
     ...queryParams.value
   }, `batch_${new Date().getTime()}.xlsx`)
 }
+
+// 监听订单ID变化，当清空时同步清空订单行ID
+watch(() => queryParams.value.orderId, (newVal, oldVal) => {
+  // 当订单ID从有值变为空值时，清空订单行ID
+  if (!newVal && oldVal) {
+    queryParams.value.orderLineId = null
+  }
+})
 
 getList()
 </script>

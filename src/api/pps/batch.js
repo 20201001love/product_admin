@@ -42,3 +42,19 @@ export function delBatch(batchId) {
     method: 'delete',
   })
 }
+
+// 释放生产批次（订单行拆批）
+export function releaseBatch(batchId) {
+  return request({
+    url: '/pps/batch/release/' + batchId,
+    method: 'put',
+  })
+}
+
+// 取消释放生产批次（订单行拆批）
+export function cancelReleaseBatch(batchId) {
+  return request({
+    url: '/pps/batch/cancelRelease/' + batchId,
+    method: 'put',
+  })
+}
