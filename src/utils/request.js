@@ -271,10 +271,17 @@ service.interceptors.response.use(
     } else if (code === 500) {
       /**
        * 500 - 服务器内部错误
-       * 显示错误提示消息，并拒绝 Promise
+       * 如果响应中包含 errors 数组（业务错误详情），则返回完整数据供业务代码处理
+       * 否则显示错误提示消息，并拒绝 Promise
        */
-      ElMessage({ message: msg, type: 'error' })
-      return Promise.reject(new Error(msg))
+      if (res.data.data && res.data.data.errors && Array.isArray(res.data.data.errors)) {
+        // 包含详细错误信息，返回给业务代码处理（不显示通用错误提示）
+        return Promise.reject(res.data)
+      } else {
+        // 普通错误，显示错误提示
+        ElMessage({ message: msg, type: 'error' })
+        return Promise.reject(new Error(msg))
+      }
     } else if (code === 601) {
       /**
        * 601 - 业务警告

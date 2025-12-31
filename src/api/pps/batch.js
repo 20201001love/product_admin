@@ -58,3 +58,20 @@ export function cancelReleaseBatch(batchId) {
     method: 'put',
   })
 }
+
+// 生成生产任务
+export function generateTask(data) {
+  return request({
+    url: '/pps/batch/generateTask',
+    method: 'post',
+    data: data,
+  })
+}
+
+// 重新生成生产任务
+export function retryGenerateTask(batchId) {
+  return request({
+    url: '/pps/batch/retryGenerateTask/' + batchId,
+    method: 'put',
+  })
+}

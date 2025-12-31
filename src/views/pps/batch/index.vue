@@ -76,13 +76,14 @@
           <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
         </el-col>
         <el-col :span="1.5">
-          <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate">修改</el-button>
-        </el-col>
-        <el-col :span="1.5">
           <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete">删除</el-button>
         </el-col>
         <el-col :span="1.5">
           <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+        </el-col>
+        <el-col :span="1.5">
+          <el-button type="success" plain icon="Finished" :disabled="multiple" @click="handleGenerateTask"
+            v-hasPermi="['pps:batch:generateTask']">生成任务</el-button>
         </el-col>
         <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
       </el-row>
@@ -123,8 +124,8 @@
               @click="handleRelease(scope.row)" v-hasPermi="['pps:batch:edit']">发布</el-button>
             <el-button v-if="scope.row.status === 'RELEASED'" link type="primary" icon="Close"
               @click="handleCancelRelease(scope.row)" v-hasPermi="['pps:batch:edit']">取消</el-button>
-            <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-              v-hasPermi="['pps:batch:edit']">修改</el-button>
+            <el-button v-if="scope.row.status === 'PLANNED' || scope.row.status === 'RELEASED'" link type="primary"
+              icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['pps:batch:edit']">修改</el-button>
             <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
               v-hasPermi="['pps:batch:delete']">删除</el-button>
           </template>
@@ -181,10 +182,18 @@
           </el-form-item>
         </el-form>
 
-        <el-table v-loading="orderLineLoading" :data="orderLineList" border highlight-current-row
-          @row-click="selectOrderLine" style="cursor: pointer;">
+        <el-table v-loading="orderLineLoading" :data="orderLineList" border>
           <el-table-column label="订单ID" align="center" prop="orderId" />
-          <el-table-column label="订单行ID" align="center" prop="orderLineId" width="120" />
+          <el-table-column label="订单行ID" align="center" width="120">
+            <template #default="scope">
+              <span class="clickable-order-line-id" @click="selectOrderLine(scope.row)">
+                <el-icon class="id-icon">
+                  <Pointer />
+                </el-icon>
+                {{ scope.row.orderLineId }}
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column label="产品" align="center" width="200">
             <template #default="scope">
               {{ getProductName(scope.row.productId) }}
@@ -193,7 +202,7 @@
           <el-table-column label="需求数量" align="center" prop="qty" width="120" />
           <el-table-column label="订单行状态" align="center" prop="status" width="120">
             <template #default="scope">
-              <dict-tag :options="production_batch_status" :value="scope.row.status" />
+              <dict-tag :options="order_line_status" :value="scope.row.status" />
             </template>
           </el-table-column>
         </el-table>
@@ -201,13 +210,46 @@
         <pagination v-show="orderLineTotal > 0" :total="orderLineTotal" v-model:page="orderLineQuery.pageNum"
           v-model:limit="orderLineQuery.pageSize" @pagination="getOrderLineList" />
       </el-dialog>
+
+      <!-- 生成任务错误弹窗 -->
+      <el-dialog title="生成任务失败详情" v-model="taskErrorDialogOpen" width="700px" append-to-body>
+        <div class="error-summary">
+          <el-alert :title="`共 ${taskErrorList.length} 个批次生成任务失败`" type="error" :closable="false" show-icon>
+          </el-alert>
+        </div>
+
+        <el-table :data="taskErrorList" border style="margin-top: 20px;" max-height="400">
+          <el-table-column label="序号" align="center" type="index" width="60" />
+          <el-table-column label="批次ID" align="center" prop="batchId" width="300">
+            <template #default="scope">
+              <el-tag type="danger">{{ scope.row.batchId }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="错误描述" align="center" prop="errorMessage" show-overflow-tooltip>
+            <template #default="scope">
+              <span class="error-message">{{ scope.row.errorMessage || scope.row.message || '未知错误' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" align="center" width="100">
+            <template #default="scope">
+              <el-button type="primary" @click="handleRetryGenerateTask(scope.row)">重新生成</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button type="primary" @click="taskErrorDialogOpen = false">确 定</el-button>
+          </div>
+        </template>
+      </el-dialog>
     </div> <!-- 关闭 content-section -->
   </div>
 </template>
 
 <script setup name="Batch">
-import { Search } from '@element-plus/icons-vue'
-import { listBatch, getBatch, delBatch, addBatch, updateBatch, releaseBatch, cancelReleaseBatch } from "@/api/pps/batch"
+import { Search, Pointer } from '@element-plus/icons-vue'
+import { listBatch, getBatch, delBatch, addBatch, updateBatch, releaseBatch, cancelReleaseBatch, generateTask, retryGenerateTask } from "@/api/pps/batch"
 import { listOrderLine } from "@/api/demand/orderLine"
 import { getToken } from "@/utils/auth.js";
 import useCustomerStore from '@/stores/modules/customer'
@@ -218,6 +260,7 @@ const baseURL = import.meta.env.VITE_APP_BASE_API
 
 const { proxy } = getCurrentInstance()
 const { production_batch_status } = proxy.useDict('production_batch_status')
+const { order_line_status } = proxy.useDict('order_line_status')
 const productList = computed(() => productStore.productList)
 const batchList = ref([])
 const open = ref(false)
@@ -237,6 +280,10 @@ const customerList = computed(() => customerStore.customerList)
 const orderLineSelectOpen = ref(false)
 const orderLineLoading = ref(false)
 const orderLineList = ref([])
+
+// 生成任务错误弹窗相关
+const taskErrorDialogOpen = ref(false)
+const taskErrorList = ref([])
 const orderLineTotal = ref(0)
 const orderLineQuery = reactive({
   pageNum: 1,
@@ -408,6 +455,60 @@ const handleAdd = () => {
   form.value.orderLineId = queryParams.value.orderLineId || null
   open.value = true
   title.value = "添加生产批次（订单行拆批）"
+}
+
+/** 生成任务按钮操作 */
+const handleGenerateTask = () => {
+  const batchIds = ids.value
+  proxy.$modal.confirm(`是否确认为选中的 ${batchIds.length} 个批次生成任务？`).then(function () {
+    return generateTask(batchIds)
+  }).then((response) => {
+    getList()
+    // 检查是否有错误信息
+    if (response.data.errors && response.data.errors.length > 0) {
+      // 有错误，显示错误弹窗
+      taskErrorList.value = response.data.errors
+      taskErrorDialogOpen.value = true
+    } else {
+      // 全部成功
+      proxy.$modal.msgSuccess("生成任务成功")
+    }
+  }).catch((error) => {
+    // 处理请求失败的情况
+    // 响应拦截器会将包含 errors 的 500 错误直接返回 res.data
+    if (error.data && error.data.errors && Array.isArray(error.data.errors)) {
+      taskErrorList.value = error.data.errors
+      taskErrorDialogOpen.value = true
+    }
+    // 其他错误由响应拦截器统一处理（显示 ElMessage）
+  })
+}
+
+/** 重新生成任务按钮操作 */
+const handleRetryGenerateTask = (row) => {
+  const batchId = row.batchId
+  retryGenerateTask(batchId).then(response => {
+    proxy.$modal.msgSuccess("重新生成任务成功")
+    // 从错误列表中移除该批次
+    taskErrorList.value = taskErrorList.value.filter(item => item.batchId !== batchId)
+    // 如果错误列表为空，关闭弹窗
+    if (taskErrorList.value.length === 0) {
+      taskErrorDialogOpen.value = false
+    }
+    getList()
+  }).catch((error) => {
+    // 重新生成失败，更新错误信息
+    if (error.data && error.data.data && error.data.data.errors) {
+      const newError = error.data.data.errors.find(e => e.batchId === batchId)
+      if (newError) {
+        // 更新错误列表中的错误信息
+        const index = taskErrorList.value.findIndex(item => item.batchId === batchId)
+        if (index !== -1) {
+          taskErrorList.value[index] = newError
+        }
+      }
+    }
+  })
 }
 
 /** 修改按钮操作 */
@@ -651,5 +752,91 @@ getList()
 
 .content-section:hover {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* 可点击的订单行ID */
+.clickable-order-line-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  color: #409eff;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8f4ff 100%);
+  border: 1px solid #d0e5ff;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.clickable-order-line-id::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.clickable-order-line-id:hover::before {
+  left: 100%;
+}
+
+.clickable-order-line-id:hover {
+  color: #66b1ff;
+  background: linear-gradient(135deg, #e8f4ff 0%, #d0e5ff 100%);
+  border-color: #a0cfff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.clickable-order-line-id:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(64, 158, 255, 0.2);
+}
+
+.clickable-order-line-id .id-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.clickable-order-line-id:hover .id-icon {
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* 错误弹窗样式 */
+.error-summary {
+  margin-bottom: 16px;
+}
+
+.error-message {
+  color: #f56c6c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 错误表格样式优化 */
+:deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+/* 错误弹窗中的表格 */
+.error-summary+.el-table {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.error-summary+.el-table :deep(.el-table__header) {
+  background-color: #fef0f0;
+}
+
+.error-summary+.el-table :deep(.el-table__header th) {
+  background-color: #fef0f0;
+  color: #f56c6c;
+  font-weight: 600;
 }
 </style>

@@ -27,9 +27,6 @@
         <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate">修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete">删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -69,7 +66,8 @@
             v-hasPermi="['demand:order:edit']">确认</el-button>
           <el-button v-if="scope.row.status === 'CONFIRMED'" link type="primary" icon="Close"
             @click="handleCancelCheck(scope.row)" v-hasPermi="['demand:order:edit']">取消</el-button>
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
+          <el-button v-if="scope.row.status === 'NEW' || scope.row.status === 'CONFIRMED'" link type="primary"
+            icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
