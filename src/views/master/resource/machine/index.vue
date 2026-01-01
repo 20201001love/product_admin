@@ -3,23 +3,25 @@
     <!-- 顶部搜索 -->
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="名称" prop="name">
-        <el-input v-model="queryParams.name" placeholder="请输入名称" clearable @keyup.enter="handleQuery" />
+        <el-input v-model="queryParams.name" placeholder="请输入名称" clearable @keyup.enter="handleQuery"
+          style="width: 130px;" />
       </el-form-item>
       <el-form-item label="锁模力" prop="tonnage">
-        <el-input v-model="queryParams.tonnage" placeholder="请输入锁模力" clearable @keyup.enter="handleQuery" />
+        <el-input v-model="queryParams.tonnage" placeholder="请输入锁模力" clearable @keyup.enter="handleQuery"
+          style="width: 130px;" />
       </el-form-item>
-      <el-form-item label="换模基准时间" prop="defaultSetupTimeMin">
-        <el-input v-model="queryParams.defaultSetupTimeMin" placeholder="请输入换模基准时间" clearable
-          @keyup.enter="handleQuery" />
+      <el-form-item label="换模时间" prop="defaultSetupTimeMin">
+        <el-input v-model="queryParams.defaultSetupTimeMin" placeholder="请输入换模时间" clearable @keyup.enter="handleQuery"
+          style="width: 130px;" />
       </el-form-item>
       <el-form-item label="日历" prop="calendarId">
-        <el-select v-model="queryParams.calendarId" placeholder="请选择日历">
+        <el-select v-model="queryParams.calendarId" placeholder="请选择日历" style="width: 130px;">
           <el-option v-for="item in calendarList" :key="item.calendarId" :label="item.calendarName"
             :value="item.calendarId" />
         </el-select>
       </el-form-item>
       <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择状态">
+        <el-select v-model="queryParams.status" placeholder="请选择状态" style="width: 130px;">
           <el-option v-for="item in resource_status" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
@@ -55,9 +57,83 @@
       <el-table-column label="锁模力" align="center" prop="tonnage" />
       <el-table-column label="换模基准时间" align="center" prop="defaultSetupTimeMin" />
       <el-table-column label="日历" align="center" prop="calendarName" />
-      <el-table-column label="状态" align="center" prop="status">
+      <el-table-column label="车间" align="center" prop="orgUnit" />
+      <el-table-column label="状态" align="center" prop="status" width="150">
         <template #default="scope">
-          <dict-tag :options="resource_status" :value="scope.row.status" />
+          <!-- AVAILABLE 状态：可故障或保养 -->
+          <el-popover v-if="scope.row.status === 'AVAILABLE'" placement="top" :width="150" trigger="hover">
+            <template #reference>
+              <span class="interactive-status-tag status-available">
+                <el-icon class="status-icon">
+                  <Edit />
+                </el-icon>
+                <dict-tag :options="resource_status" :value="scope.row.status" />
+              </span>
+            </template>
+            <div class="status-popover-content">
+              <div class="popover-title">状态操作</div>
+              <el-button type="danger" plain size="small" @click="handleSetDown(scope.row)" class="status-action-btn">
+                <el-icon>
+                  <Warning />
+                </el-icon>
+                故障
+              </el-button>
+              <el-button type="warning" plain size="small" @click="handleSetMaintenance(scope.row)"
+                class="status-action-btn">
+                <el-icon>
+                  <Tools />
+                </el-icon>
+                保养
+              </el-button>
+            </div>
+          </el-popover>
+
+          <!-- DOWN 状态：可恢复 -->
+          <el-popover v-else-if="scope.row.status === 'DOWN'" placement="top" :width="120" trigger="hover">
+            <template #reference>
+              <span class="interactive-status-tag status-down">
+                <el-icon class="status-icon">
+                  <Edit />
+                </el-icon>
+                <dict-tag :options="resource_status" :value="scope.row.status" />
+              </span>
+            </template>
+            <div class="status-popover-content">
+              <div class="popover-title">状态操作</div>
+              <el-button type="success" plain size="small" @click="handleRestoreMachine(scope.row)"
+                class="status-action-btn">
+                <el-icon>
+                  <RefreshRight />
+                </el-icon>
+                恢复
+              </el-button>
+            </div>
+          </el-popover>
+
+          <!-- MAINTENANCE 状态：可恢复 -->
+          <el-popover v-else-if="scope.row.status === 'MAINTENANCE'" placement="top" :width="120" trigger="hover">
+            <template #reference>
+              <span class="interactive-status-tag status-maintenance">
+                <el-icon class="status-icon">
+                  <Edit />
+                </el-icon>
+                <dict-tag :options="resource_status" :value="scope.row.status" />
+              </span>
+            </template>
+            <div class="status-popover-content">
+              <div class="popover-title">状态操作</div>
+              <el-button type="success" plain size="small" @click="handleRestoreMachine(scope.row)"
+                class="status-action-btn">
+                <el-icon>
+                  <RefreshRight />
+                </el-icon>
+                恢复
+              </el-button>
+            </div>
+          </el-popover>
+
+          <!-- 其他状态：仅显示 -->
+          <dict-tag v-else :options="resource_status" :value="scope.row.status" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -81,8 +157,15 @@
         <el-form-item label="锁模力" prop="tonnage">
           <el-input v-model="form.tonnage" placeholder="请输入锁模力" />
         </el-form-item>
-        <el-form-item label="换模基准时间" prop="defaultSetupTimeMin">
-          <el-input v-model="form.defaultSetupTimeMin" placeholder="请输入换模基准时间" />
+        <el-form-item label="换模时间" prop="defaultSetupTimeMin">
+          <el-input v-model="form.defaultSetupTimeMin" placeholder="请输入换模时间" />
+        </el-form-item>
+        <el-form-item label="车间" prop="orgUnit">
+          <el-select v-model="form.orgUnit" placeholder="请选择车间">
+            <el-option value="车间1" label="车间1" />
+            <el-option value="车间2" label="车间2" />
+            <el-option value="车间3" label="车间3" />
+          </el-select>
         </el-form-item>
         <el-form-item label="日历" prop="calendarId">
           <el-select v-model="form.calendarId" placeholder="请选择日历">
@@ -97,14 +180,16 @@
           <el-button @click="cancel">取 消</el-button>
         </div>
       </template>
+
     </vxe-modal>
   </div>
 </template>
 
 <script setup name="Machine">
-import { listMachine, getMachine, delMachine, addMachine, updateMachine } from "@/api/master/resource/machine"
+import { listMachine, getMachine, delMachine, addMachine, updateMachine, setMachineDown, setMachineMaintenance, restoreMachine } from "@/api/master/resource/machine"
 import { getToken } from "@/utils/auth.js";
 import useCalendarStore from '@/stores/modules/calendar'
+import { Edit, Warning, Tools, RefreshRight } from '@element-plus/icons-vue'
 const { proxy } = getCurrentInstance()
 const baseURL = import.meta.env.VITE_APP_BASE_API
 const calendarStore = useCalendarStore()
@@ -273,7 +358,181 @@ const handleExport = () => {
   }, `machine_${new Date().getTime()}.xlsx`)
 }
 
+/** 设置机器为故障状态 (AVAILABLE → DOWN) */
+const handleSetDown = (row) => {
+  proxy.$modal.confirm('确认要将该机器设置为故障状态吗？').then(function () {
+    return setMachineDown(row.machineId)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("机器已设置为故障状态")
+  }).catch(() => { })
+}
+
+/** 设置机器为保养状态 (AVAILABLE → MAINTENANCE) */
+const handleSetMaintenance = (row) => {
+  proxy.$modal.confirm('确认要将该机器设置为保养状态吗？').then(function () {
+    return setMachineMaintenance(row.machineId)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("机器已设置为保养状态")
+  }).catch(() => { })
+}
+
+/** 恢复机器状态 (DOWN/MAINTENANCE → AVAILABLE) */
+const handleRestoreMachine = (row) => {
+  proxy.$modal.confirm('确认要恢复该机器为可用状态吗？').then(function () {
+    return restoreMachine(row.machineId)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("机器已恢复为可用状态")
+  }).catch(() => { })
+}
+
 // 初始化日历列表
 calendarStore.getCalendarList()
 getList()
 </script>
+
+<style lang="scss" scoped>
+/* 可交互的状态标签（参照任务页面样式） */
+.interactive-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 流光效果 */
+.interactive-status-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.interactive-status-tag:hover::before {
+  left: 100%;
+}
+
+/* AVAILABLE 状态样式（绿色） */
+.status-available {
+  color: #67c23a;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e8f5e9 100%);
+  border-color: #c2e7b0;
+}
+
+.status-available:hover {
+  color: #85ce61;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c2e7b0 100%);
+  border-color: #a4d689;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.3);
+}
+
+/* DOWN 状态样式（红色） */
+.status-down {
+  color: #f56c6c;
+  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
+  border-color: #fbc4c4;
+}
+
+.status-down:hover {
+  color: #f78989;
+  background: linear-gradient(135deg, #fde2e2 0%, #fbc4c4 100%);
+  border-color: #f9a7a7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
+}
+
+/* MAINTENANCE 状态样式（橙色） */
+.status-maintenance {
+  color: #e6a23c;
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
+  border-color: #f5dab1;
+}
+
+.status-maintenance:hover {
+  color: #ebb563;
+  background: linear-gradient(135deg, #faecd8 0%, #f5dab1 100%);
+  border-color: #efc78e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(230, 162, 60, 0.3);
+}
+
+/* 状态图标 */
+.status-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.interactive-status-tag:hover .status-icon {
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* 气泡内容样式 */
+.status-popover-content {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.popover-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+/* 气泡中的按钮 */
+.status-popover-content .el-button {
+  margin-top: 4px;
+  transition: all 0.3s ease;
+}
+
+.status-popover-content .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 状态操作按钮统一样式，确保对齐 */
+.status-action-btn {
+  width: 80% !important;
+  margin-bottom: 8px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.status-action-btn:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* 确保按钮内部内容对齐 */
+.status-action-btn :deep(.el-button__inner) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+}
+
+.status-action-btn :deep(.el-icon) {
+  margin-right: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0;
+}
+</style>

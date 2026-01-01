@@ -42,3 +42,27 @@ export function delMachine(machineId) {
     method: 'delete',
   })
 }
+
+// 设置机器为故障状态（AVAILABLE → DOWN）
+export function setMachineDown(machineId) {
+  return request({
+    url: '/master/resource/machine/down/' + machineId,
+    method: 'put',
+  })
+}
+
+// 设置机器为保养状态（AVAILABLE → MAINTENANCE）
+export function setMachineMaintenance(machineId) {
+  return request({
+    url: '/master/resource/machine/maintenance/' + machineId,
+    method: 'put',
+  })
+}
+
+// 恢复机器状态（DOWN/MAINTENANCE → AVAILABLE）
+export function restoreMachine(machineId) {
+  return request({
+    url: '/master/resource/machine/restore/' + machineId,
+    method: 'put',
+  })
+}
