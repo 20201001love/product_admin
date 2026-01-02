@@ -164,7 +164,7 @@ const taskQueryParams = reactive({
   pageSize: 10,
   batchId: null,
   opCode: null,
-  status: ['READY', 'SCHEDULED'] // 只查询 READY 和 SCHEDULED 状态
+  statusList: ['READY', 'SCHEDULED'] // 只查询 READY 和 SCHEDULED 状态
 })
 
 // 派工/排程结果相关（第二张卡片）
@@ -187,8 +187,8 @@ const single = ref(true)
 const multiple = ref(true)
 const title = ref("")
 const selectedRow = ref(null)
-const { op_code, operation_task_status } = proxy.useDict("op_code", "operation_task_status")
-
+const { op_code } = proxy.useDict("op_code")
+const { operation_task_status } = proxy.useDict("operation_task_status")
 const data = reactive({
   form: {},
   rules: {
@@ -240,7 +240,7 @@ const getTaskList = (reset = false) => {
   const params = {
     pageNum: taskQueryParams.pageNum,
     pageSize: taskQueryParams.pageSize,
-    status: taskQueryParams.status // 数组形式，axios 会自动转换为 status[]=READY&status[]=SCHEDULED
+    statusList: taskQueryParams.statusList // 数组形式，axios 会自动转换为 statusList[]=READY&statusList[]=SCHEDULED
   }
   // 添加非空查询条件
   if (taskQueryParams.batchId) {

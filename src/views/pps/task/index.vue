@@ -56,69 +56,69 @@
       <el-table-column label="任务状态" align="center" width="150">
         <template #default="scope">
           <!-- READY 状态：可取消 -->
-          <el-popover v-if="scope.row.status === 'READY'" placement="top" :width="150" trigger="hover">
-            <template #reference>
-              <span class="interactive-status-tag status-ready">
-                <el-icon class="status-icon">
-                  <Edit />
-                </el-icon>
-                <dict-tag :options="operation_task_status" :value="scope.row.status" />
-              </span>
+          <el-tooltip v-if="scope.row.status === 'READY'" placement="top" effect="light" :show-after="300">
+            <template #content>
+              <div class="status-popover-content">
+                <div class="popover-title">状态操作</div>
+                <el-button type="danger" plain size="small" @click="handleCancelTask(scope.row)" style="width: 100%;">
+                  <el-icon>
+                    <Close />
+                  </el-icon>
+                  取消任务
+                </el-button>
+              </div>
             </template>
-            <div class="status-popover-content">
-              <div class="popover-title">状态操作</div>
-              <el-button type="danger" plain size="small" @click="handleCancelTask(scope.row)" style="width: 100%;">
-                <el-icon>
-                  <Close />
-                </el-icon>
-                取消任务
-              </el-button>
-            </div>
-          </el-popover>
+            <span class="interactive-status-tag status-ready">
+              <el-icon class="status-icon">
+                <Edit />
+              </el-icon>
+              <dict-tag :options="operation_task_status" :value="scope.row.status" />
+            </span>
+          </el-tooltip>
 
           <!-- CANCELLED 状态：可恢复 -->
-          <el-popover v-else-if="scope.row.status === 'CANCELLED'" placement="top" :width="120" trigger="hover">
-            <template #reference>
-              <span class="interactive-status-tag status-cancelled">
-                <el-icon class="status-icon">
-                  <Edit />
-                </el-icon>
-                <dict-tag :options="operation_task_status" :value="scope.row.status" />
-              </span>
+          <el-tooltip v-else-if="scope.row.status === 'CANCELLED'" placement="top" effect="light" :show-after="300">
+            <template #content>
+              <div class="status-popover-content">
+                <div class="popover-title">状态操作</div>
+                <el-button type="success" plain size="small" @click="handleRestoreTask(scope.row)" style="width: 100%;">
+                  <el-icon>
+                    <RefreshRight />
+                  </el-icon>
+                  恢复任务
+                </el-button>
+              </div>
             </template>
-            <div class="status-popover-content">
-              <div class="popover-title">状态操作</div>
-              <el-button type="success" plain size="small" @click="handleRestoreTask(scope.row)" style="width: 100%;">
-                <el-icon>
-                  <RefreshRight />
-                </el-icon>
-                恢复任务
-              </el-button>
-            </div>
-          </el-popover>
+            <span class="interactive-status-tag status-cancelled">
+              <el-icon class="status-icon">
+                <Edit />
+              </el-icon>
+              <dict-tag :options="operation_task_status" :value="scope.row.status" />
+            </span>
+          </el-tooltip>
 
           <!-- SCHEDULED 状态：可撤销排程 -->
-          <el-popover v-else-if="scope.row.status === 'SCHEDULED'" placement="top" :width="120" trigger="hover">
-            <template #reference>
-              <span class="interactive-status-tag status-scheduled">
-                <el-icon class="status-icon">
-                  <Edit />
-                </el-icon>
-                <dict-tag :options="operation_task_status" :value="scope.row.status" />
-              </span>
+          <el-tooltip v-else-if="scope.row.status === 'SCHEDULED'" placement="top" effect="light" :show-after="300">
+            <template #content>
+              <div class="status-popover-content">
+                <div class="popover-title">状态操作</div>
+                <div class="popover-warning">⚠️ 派工记录将被删除</div>
+                <el-button type="warning" plain size="small" @click="handleRevokeSchedule(scope.row)"
+                  style="width: 100%;">
+                  <el-icon>
+                    <RefreshLeft />
+                  </el-icon>
+                  撤销排程
+                </el-button>
+              </div>
             </template>
-            <div class="status-popover-content">
-              <div class="popover-title">状态操作</div>
-              <div class="popover-warning">⚠️ 派工记录将被删除</div>
-              <el-button type="warning" plain size="small" @click="handleRevokeSchedule(scope.row)"
-                style="width: 100%;">
-                <el-icon>
-                  <RefreshLeft />
-                </el-icon>
-                撤销排程
-              </el-button>
-            </div>
-          </el-popover>
+            <span class="interactive-status-tag status-scheduled">
+              <el-icon class="status-icon">
+                <Edit />
+              </el-icon>
+              <dict-tag :options="operation_task_status" :value="scope.row.status" />
+            </span>
+          </el-tooltip>
 
           <!-- 其他状态：仅显示 -->
           <dict-tag v-else :options="operation_task_status" :value="scope.row.status" />
