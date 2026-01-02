@@ -18,6 +18,13 @@ export function listReadyAndScheduledTask(query) {
   })
 }
 
+export function getTask(taskId) {
+  return request({
+    url: '/pps/task/' + taskId,
+    method: 'get',
+  })
+}
+
 // 新增工序任务
 export function addTask(data) {
   return request({

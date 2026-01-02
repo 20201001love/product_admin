@@ -163,7 +163,7 @@
 
 <script setup name="Task">
 import { Close, RefreshRight, RefreshLeft, Edit } from '@element-plus/icons-vue'
-import { listTask, getTask, delTask, addTask, updateTask, cancelTask, restoreTask, revokeSchedule } from "@/api/pps/task"
+import { listTask, delTask, addTask, updateTask, cancelTask, restoreTask, revokeSchedule, getTask } from "@/api/pps/task"
 import { getToken } from "@/utils/auth.js";
 const baseURL = import.meta.env.VITE_APP_BASE_API
 
