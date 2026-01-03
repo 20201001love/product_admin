@@ -129,6 +129,20 @@ export const dynamicRoutes = [
       },
     ],
   },
+  {
+    path: '/execute/event/detail',
+    component: Layout,
+    hidden: true,
+    permissions: ['execute:event:detail'],
+    children: [
+      {
+        path: ':taskId',
+        component: () => import('@/views/execute/event/detail'),
+        name: 'EventDetail',
+        meta: { title: '事件详情', activeMenu: '/execute/event' },
+      },
+    ],
+  },
 ]
 
 const router = createRouter({

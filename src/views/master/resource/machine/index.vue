@@ -58,82 +58,85 @@
       <el-table-column label="换模基准时间" align="center" prop="defaultSetupTimeMin" />
       <el-table-column label="日历" align="center" prop="calendarName" />
       <el-table-column label="车间" align="center" prop="orgUnit" />
-      <el-table-column label="状态" align="center" prop="status" width="150">
+      <el-table-column label="状态" align="center" prop="effectiveStatus" width="150">
         <template #default="scope">
           <!-- AVAILABLE 状态：可故障或保养 -->
-          <el-popover v-if="scope.row.status === 'AVAILABLE'" placement="top" :width="150" trigger="hover">
-            <template #reference>
-              <span class="interactive-status-tag status-available">
-                <el-icon class="status-icon">
-                  <Edit />
-                </el-icon>
-                <dict-tag :options="resource_status" :value="scope.row.status" />
-              </span>
+          <el-tooltip v-if="scope.row.effectiveStatus === 'AVAILABLE'" placement="top" effect="light" :show-after="300"
+            :offset="8">
+            <template #content>
+              <div class="status-popover-content">
+                <div class="popover-title">状态操作</div>
+                <el-button type="danger" plain size="small" @click="handleSetDown(scope.row)" class="status-action-btn">
+                  <el-icon>
+                    <Warning />
+                  </el-icon>
+                  故障
+                </el-button>
+                <el-button type="warning" plain size="small" @click="handleSetMaintenance(scope.row)"
+                  class="status-action-btn">
+                  <el-icon>
+                    <Tools />
+                  </el-icon>
+                  保养
+                </el-button>
+              </div>
             </template>
-            <div class="status-popover-content">
-              <div class="popover-title">状态操作</div>
-              <el-button type="danger" plain size="small" @click="handleSetDown(scope.row)" class="status-action-btn">
-                <el-icon>
-                  <Warning />
-                </el-icon>
-                故障
-              </el-button>
-              <el-button type="warning" plain size="small" @click="handleSetMaintenance(scope.row)"
-                class="status-action-btn">
-                <el-icon>
-                  <Tools />
-                </el-icon>
-                保养
-              </el-button>
-            </div>
-          </el-popover>
+            <span class="interactive-status-tag status-available">
+              <el-icon class="status-icon">
+                <Edit />
+              </el-icon>
+              <dict-tag :options="resource_status" :value="scope.row.effectiveStatus" />
+            </span>
+          </el-tooltip>
 
           <!-- DOWN 状态：可恢复 -->
-          <el-popover v-else-if="scope.row.status === 'DOWN'" placement="top" :width="120" trigger="hover">
-            <template #reference>
-              <span class="interactive-status-tag status-down">
-                <el-icon class="status-icon">
-                  <Edit />
-                </el-icon>
-                <dict-tag :options="resource_status" :value="scope.row.status" />
-              </span>
+          <el-tooltip v-else-if="scope.row.effectiveStatus === 'DOWN'" placement="top" effect="light" :show-after="300"
+            :offset="8">
+            <template #content>
+              <div class="status-popover-content">
+                <div class="popover-title">状态操作</div>
+                <el-button type="success" plain size="small" @click="handleRestoreMachine(scope.row)"
+                  class="status-action-btn">
+                  <el-icon>
+                    <RefreshRight />
+                  </el-icon>
+                  恢复
+                </el-button>
+              </div>
             </template>
-            <div class="status-popover-content">
-              <div class="popover-title">状态操作</div>
-              <el-button type="success" plain size="small" @click="handleRestoreMachine(scope.row)"
-                class="status-action-btn">
-                <el-icon>
-                  <RefreshRight />
-                </el-icon>
-                恢复
-              </el-button>
-            </div>
-          </el-popover>
+            <span class="interactive-status-tag status-down">
+              <el-icon class="status-icon">
+                <Edit />
+              </el-icon>
+              <dict-tag :options="resource_status" :value="scope.row.effectiveStatus" />
+            </span>
+          </el-tooltip>
 
           <!-- MAINTENANCE 状态：可恢复 -->
-          <el-popover v-else-if="scope.row.status === 'MAINTENANCE'" placement="top" :width="120" trigger="hover">
-            <template #reference>
-              <span class="interactive-status-tag status-maintenance">
-                <el-icon class="status-icon">
-                  <Edit />
-                </el-icon>
-                <dict-tag :options="resource_status" :value="scope.row.status" />
-              </span>
+          <el-tooltip v-else-if="scope.row.effectiveStatus === 'MAINTENANCE'" placement="top" effect="light"
+            :show-after="300" :offset="8">
+            <template #content>
+              <div class="status-popover-content">
+                <div class="popover-title">状态操作</div>
+                <el-button type="success" plain size="small" @click="handleRestoreMachine(scope.row)"
+                  class="status-action-btn">
+                  <el-icon>
+                    <RefreshRight />
+                  </el-icon>
+                  恢复
+                </el-button>
+              </div>
             </template>
-            <div class="status-popover-content">
-              <div class="popover-title">状态操作</div>
-              <el-button type="success" plain size="small" @click="handleRestoreMachine(scope.row)"
-                class="status-action-btn">
-                <el-icon>
-                  <RefreshRight />
-                </el-icon>
-                恢复
-              </el-button>
-            </div>
-          </el-popover>
+            <span class="interactive-status-tag status-maintenance">
+              <el-icon class="status-icon">
+                <Edit />
+              </el-icon>
+              <dict-tag :options="resource_status" :value="scope.row.effectiveStatus" />
+            </span>
+          </el-tooltip>
 
           <!-- 其他状态：仅显示 -->
-          <dict-tag v-else :options="resource_status" :value="scope.row.status" />
+          <dict-tag v-else :options="resource_status" :value="scope.row.effectiveStatus" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -436,7 +439,6 @@ getList()
   color: #85ce61;
   background: linear-gradient(135deg, #e8f5e9 0%, #c2e7b0 100%);
   border-color: #a4d689;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(103, 194, 58, 0.3);
 }
 
@@ -451,7 +453,6 @@ getList()
   color: #f78989;
   background: linear-gradient(135deg, #fde2e2 0%, #fbc4c4 100%);
   border-color: #f9a7a7;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
 }
 
@@ -466,7 +467,6 @@ getList()
   color: #ebb563;
   background: linear-gradient(135deg, #faecd8 0%, #f5dab1 100%);
   border-color: #efc78e;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(230, 162, 60, 0.3);
 }
 

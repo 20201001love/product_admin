@@ -9,15 +9,6 @@ export function listTask(query) {
   })
 }
 
-// 查询就绪和排程的工序任务列表
-export function listReadyAndScheduledTask(query) {
-  return request({
-    url: '/pps/task/listReadyAndScheduled',
-    method: 'get',
-    params: query,
-  })
-}
-
 export function getTask(taskId) {
   return request({
     url: '/pps/task/' + taskId,

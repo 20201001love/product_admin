@@ -8,9 +8,6 @@
       <el-form-item label="工序" prop="opCode">
         <el-input v-model="queryParams.opCode" placeholder="请输入工序" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="工序顺序" prop="sequence">
-        <el-input v-model="queryParams.sequence" placeholder="请输入工序顺序" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
       <el-form-item label="预计时长" prop="stdDurationMin">
         <el-input v-model="queryParams.stdDurationMin" placeholder="请输入预计时长" clearable @keyup.enter="handleQuery" />
       </el-form-item>
@@ -39,8 +36,8 @@
       @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" type="index" :index="indexMethod" />
-      <el-table-column label="任务ID" align="center" prop="taskId" />
-      <el-table-column label="所属批次ID" align="center" prop="batchId" />
+      <el-table-column label="任务" align="center" prop="taskId" />
+      <el-table-column label="批次" align="center" prop="batchId" />
       <el-table-column label="工序" align="center">
         <template #default="scope">
           <dict-tag :options="op_code" :value="scope.row.opCode" />
@@ -56,7 +53,7 @@
       <el-table-column label="任务状态" align="center" width="150">
         <template #default="scope">
           <!-- READY 状态：可取消 -->
-          <el-tooltip v-if="scope.row.status === 'READY'" placement="top" effect="light" :show-after="300">
+          <el-tooltip v-if="scope.row.status === 'READY'" placement="top" effect="light" :show-after="300" :offset="8">
             <template #content>
               <div class="status-popover-content">
                 <div class="popover-title">状态操作</div>
@@ -77,7 +74,8 @@
           </el-tooltip>
 
           <!-- CANCELLED 状态：可恢复 -->
-          <el-tooltip v-else-if="scope.row.status === 'CANCELLED'" placement="top" effect="light" :show-after="300">
+          <el-tooltip v-else-if="scope.row.status === 'CANCELLED'" placement="top" effect="light" :show-after="300"
+            :offset="8">
             <template #content>
               <div class="status-popover-content">
                 <div class="popover-title">状态操作</div>
@@ -98,7 +96,8 @@
           </el-tooltip>
 
           <!-- SCHEDULED 状态：可撤销排程 -->
-          <el-tooltip v-else-if="scope.row.status === 'SCHEDULED'" placement="top" effect="light" :show-after="300">
+          <el-tooltip v-else-if="scope.row.status === 'SCHEDULED'" placement="top" effect="light" :show-after="300"
+            :offset="8">
             <template #content>
               <div class="status-popover-content">
                 <div class="popover-title">状态操作</div>
@@ -417,7 +416,6 @@ getList()
   color: #66b1ff;
   background: linear-gradient(135deg, #e8f4ff 0%, #d0e5ff 100%);
   border-color: #a0cfff;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
 }
 
@@ -432,7 +430,6 @@ getList()
   color: #f78989;
   background: linear-gradient(135deg, #fde2e2 0%, #fbc4c4 100%);
   border-color: #f9a7a7;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
 }
 
@@ -447,7 +444,6 @@ getList()
   color: #ebb563;
   background: linear-gradient(135deg, #faecd8 0%, #f5dab1 100%);
   border-color: #efc78e;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(230, 162, 60, 0.3);
 }
 

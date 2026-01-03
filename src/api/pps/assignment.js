@@ -5,7 +5,7 @@ export function listAssignment(query) {
   return request({
     url: '/pps/assignment/list',
     method: 'get',
-    params: query
+    params: query,
   })
 }
 
@@ -13,7 +13,7 @@ export function listAssignment(query) {
 export function getAssignment(assignmentId) {
   return request({
     url: '/pps/assignment/' + assignmentId,
-    method: 'get'
+    method: 'get',
   })
 }
 
@@ -22,7 +22,7 @@ export function addAssignment(data) {
   return request({
     url: '/pps/assignment',
     method: 'post',
-    data: data
+    data: data,
   })
 }
 
@@ -31,7 +31,7 @@ export function updateAssignment(data) {
   return request({
     url: '/pps/assignment',
     method: 'put',
-    data: data
+    data: data,
   })
 }
 
@@ -39,6 +39,15 @@ export function updateAssignment(data) {
 export function delAssignment(assignmentId) {
   return request({
     url: '/pps/assignment/' + assignmentId,
-    method: 'delete'
+    method: 'delete',
+  })
+}
+
+// 一键排程
+export function scheduleTask(data) {
+  return request({
+    url: '/pps/assignment/schedule',
+    method: 'post',
+    data: data,
   })
 }

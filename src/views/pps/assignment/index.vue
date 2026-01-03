@@ -18,6 +18,7 @@
         </el-form-item>
       </el-form>
 
+      <el-button type="primary" plain icon="Sort" @click="handleScheduleAll">全部排程</el-button>
       <!-- 表格 -->
       <el-table border v-loading="taskLoading" :data="taskList">
         <el-table-column label="任务" align="center" prop="taskId" />
@@ -34,10 +35,34 @@
         </el-table-column>
         <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-button type="primary" plain icon="Sort" @click="handleSchedule(scope.row)">一键排程</el-button>
+            <el-button v-if="scope.row.status === 'READY'" type="primary" plain icon="Sort"
+              @click="handleSchedule(scope.row)">一键排程</el-button>
+            <el-button v-if="scope.row.status === 'SCHEDULED'" type="danger" plain icon="Close"
+              @click="handleRevokeSchedule(scope.row)">撤销排程</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 添加或修改工序任务对话框 -->
+      <vxe-modal :title="isScheduleAll ? '全部排程' : '一键排程'" v-model="assignmentOpen" width="500px" show-maximize
+        showFooter resize>
+        <el-form ref="scheduleRef" :model="assignmentForm" :rules="assignmentForm.rules" label-width="80px">
+          <el-form-item v-if="!isScheduleAll" label="任务ID" prop="taskId">
+            <el-input v-model="assignmentForm.taskId" disabled />
+          </el-form-item>
+          <el-form-item label="排程起点" prop="assignmentStart">
+            <el-date-picker clearable v-model="assignmentForm.assignmentStart" type="date" value-format="YYYY-MM-DD"
+              placeholder="请选择排程起点" style="width: 100%;">
+            </el-date-picker>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button type="primary" @click="handleAssignment">确 定</el-button>
+            <el-button @click="handleAssignmentCancel">取 消</el-button>
+          </div>
+        </template>
+      </vxe-modal>
 
       <!-- 分页组件 -->
       <pagination v-show="taskTotal > 0" :total="taskTotal" v-model:page="taskQueryParams.pageNum"
@@ -146,9 +171,9 @@
 </template>
 
 <script setup name="Assignment">
-import { onMounted, onUnmounted } from 'vue'
-import { listAssignment, getAssignment, delAssignment, addAssignment, updateAssignment } from "@/api/pps/assignment"
-import { listTask } from "@/api/pps/task"
+import { onMounted, onUnmounted, nextTick } from 'vue'
+import { listAssignment, getAssignment, delAssignment, addAssignment, updateAssignment, scheduleTask } from "@/api/pps/assignment"
+import { listTask, revokeSchedule } from "@/api/pps/task"
 import { getToken } from "@/utils/auth.js";
 const baseURL = import.meta.env.VITE_APP_BASE_API
 
@@ -180,7 +205,19 @@ const assignmentQueryParams = reactive({
   plannedEnd: null,
 })
 
+const isScheduleAll = ref(false) // 是否为全部排程模式
+const assignmentForm = reactive({
+  taskId: null,
+  assignmentStart: null,
+  rules: {
+    assignmentStart: [
+      { required: true, message: "排程起点不能为空", trigger: "blur" }
+    ],
+  }
+})
+
 const open = ref(false)
+const assignmentOpen = ref(false)
 const showSearch = ref(true)
 const ids = ref([])
 const single = ref(true)
@@ -305,9 +342,45 @@ const resetTaskQuery = () => {
 
 /** 一键排程 */
 const handleSchedule = (row) => {
-  console.log("一键排程", row)
-  // TODO: 实现一键排程逻辑
-  proxy.$modal.msgSuccess("一键排程功能开发中")
+  isScheduleAll.value = false
+  assignmentForm.taskId = row.taskId
+  assignmentForm.assignmentStart = null
+  assignmentOpen.value = true
+  // 重置表单验证状态
+  nextTick(() => {
+    if (proxy.$refs.scheduleRef) {
+      proxy.$refs.scheduleRef.clearValidate()
+    }
+  })
+}
+
+/** 全部排程 */
+const handleScheduleAll = () => {
+  isScheduleAll.value = true
+  assignmentForm.taskId = null
+  assignmentForm.assignmentStart = null
+  assignmentOpen.value = true
+  // 重置表单验证状态
+  nextTick(() => {
+    if (proxy.$refs.scheduleRef) {
+      proxy.$refs.scheduleRef.clearValidate()
+    }
+  })
+}
+
+/** 撤销排程 */
+const handleRevokeSchedule = (row) => {
+  proxy.$modal.confirm('确认要撤销该任务的排程吗？派工记录也将被删除。', '撤销排程', {
+    confirmButtonText: '确认撤销',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(function () {
+    return revokeSchedule(row.taskId)
+  }).then(() => {
+    getTaskList(true)
+    getAssignmentList()
+    proxy.$modal.msgSuccess("排程已撤销，派工记录已删除")
+  }).catch(() => { })
 }
 
 /** 查询派工/排程结果列表 */
@@ -405,6 +478,7 @@ const handleDelete = (row) => {
     return delAssignment(_assignmentIds)
   }).then(() => {
     getAssignmentList()
+    getTaskList(true)
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => { })
 }
@@ -414,6 +488,42 @@ const handleExport = () => {
   proxy.download('pps/assignment/export', {
     ...assignmentQueryParams
   }, `assignment_${new Date().getTime()}.xlsx`)
+}
+
+/** 一键排程确定按钮 */
+const handleAssignment = () => {
+  if (!proxy.$refs.scheduleRef) return
+  proxy.$refs.scheduleRef.validate(valid => {
+    if (valid) {
+      const params = {
+        assignmentStart: assignmentForm.assignmentStart
+      }
+      // 只有单个排程时才携带任务ID
+      if (!isScheduleAll.value) {
+        params.taskId = assignmentForm.taskId
+      }
+      scheduleTask(params).then(response => {
+        proxy.$modal.msgSuccess(isScheduleAll.value ? "全部排程成功" : "排程成功")
+        assignmentOpen.value = false
+        // 刷新任务列表和派工列表
+        getTaskList(true)
+        getAssignmentList()
+      }).catch(error => {
+        console.error('排程失败:', error)
+      })
+    }
+  })
+}
+
+/** 一键排程取消按钮 */
+const handleAssignmentCancel = () => {
+  assignmentOpen.value = false
+  isScheduleAll.value = false
+  assignmentForm.taskId = null
+  assignmentForm.assignmentStart = null
+  if (proxy.$refs.scheduleRef) {
+    proxy.$refs.scheduleRef.clearValidate()
+  }
 }
 
 // 初始化：同时加载任务列表和派工列表

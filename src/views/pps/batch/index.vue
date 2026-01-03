@@ -230,7 +230,7 @@
               <span class="error-message">{{ scope.row.errorMessage || scope.row.message || '未知错误' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" width="100">
+          <el-table-column label="操作" align="center">
             <template #default="scope">
               <el-button type="primary" @click="handleRetryGenerateTask(scope.row)">重新生成</el-button>
             </template>
@@ -790,12 +790,10 @@ getList()
   color: #66b1ff;
   background: linear-gradient(135deg, #e8f4ff 0%, #d0e5ff 100%);
   border-color: #a0cfff;
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
 }
 
 .clickable-order-line-id:active {
-  transform: translateY(0);
   box-shadow: 0 1px 4px rgba(64, 158, 255, 0.2);
 }
 
