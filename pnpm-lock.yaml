@@ -17,6 +17,9 @@ importers:
       axios:
         specifier: ^1.13.2
         version: 1.13.2
+      dhtmlx-gantt:
+        specifier: ^9.1.1
+        version: 9.1.1
       element-plus:
         specifier: ^2.12.0
         version: 2.12.0(vue@3.5.25)
@@ -1362,6 +1365,9 @@ packages:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
     hasBin: true
+
+  dhtmlx-gantt@9.1.1:
+    resolution: {integrity: sha512-ym4m+kHHFJfeI3JYs7PdfQb31uqfbA44qrBxuc3mye9kx6Q+uc4dg6zxAXr7ll+6G9ccRcGZqk2fKfBqwCMp3w==}
 
   dom-serializer@0.2.2:
     resolution: {integrity: sha512-2/xPb3ORsQ42nHYiSunXkDjPLBaEj/xTwUO4B7XCZQTRk7EBtTOPaygh10YAAh2OI1Qrp6NWfpAhzswj0ydt9g==}
@@ -4137,6 +4143,8 @@ snapshots:
 
   detect-libc@1.0.3:
     optional: true
+
+  dhtmlx-gantt@9.1.1: {}
 
   dom-serializer@0.2.2:
     dependencies:

@@ -46,38 +46,56 @@
     <div class="calendar-scroll" ref="scrollWrapper" @scroll.passive="handleScroll" v-loading="loading">
       <div v-if="calendarList.length" class="calendar-grid">
         <div v-for="item in calendarList" :key="item.calendarId" class="calendar-card"
-          :class="{ 'is-selected': isSelected(item.calendarId) }">
+          :class="[{ 'is-selected': isSelected(item.calendarId) }, item.workdayPattern === 'Mon-Fri' ? 'theme-blue' : 'theme-orange']">
+          
+          <!-- 仿真装订环 -->
+          <div class="calendar-binder">
+            <div class="binder-hole" v-for="i in 4" :key="i"></div>
+          </div>
+
+          <!-- 选择状态徽标 -->
           <div class="select-badge" @click.stop="toggleSelect(item.calendarId)">
             <el-icon class="check-icon">
               <Check />
             </el-icon>
           </div>
-          <div class="card-header">
-            <div class="card-title">{{ item.calendarName }}</div>
-          </div>
-          <div class="card-body">
-            <div class="card-row">
-              <span class="label">工作日模式</span>
-              <span class="value">{{ item.workdayPattern }}</span>
+
+          <!-- 日历纸页 -->
+          <div class="calendar-inner">
+            <div class="calendar-header-bar">
+              <span class="pattern-text">{{ item.workdayPattern === 'Mon-Fri' ? '五天工作制' : '六天工作制' }}</span>
             </div>
-            <div class="card-row">
-              <span class="label">班次</span>
-              <span class="value">{{ item.shiftStart }} - {{ item.shiftEnd }}</span>
-            </div>
-            <div class="card-row">
-              <span class="label">工作时长</span>
-              <span class="value">{{ calculateWorkHours(item) }} 小时</span>
-            </div>
-            <div v-if="item.breaks?.length" class="break-list">
-              <div class="break-title">休息时段</div>
-              <div class="break-item" v-for="(breakItem, index) in item.breaks" :key="index">
-                {{ breakItem.start }} - {{ breakItem.end }}
+            
+            <div class="calendar-body">
+              <div class="calendar-title-large">{{ item.calendarName }}</div>
+              
+              <div class="calendar-schedule">
+                <div class="schedule-item main-shift">
+                  <el-icon><Timer /></el-icon>
+                  <span class="time-range">{{ item.shiftStart }} - {{ item.shiftEnd }}</span>
+                </div>
+                
+                <div class="schedule-item work-hours">
+                  <span class="hour-num">{{ calculateWorkHours(item) }}</span>
+                  <span class="hour-unit">Hours/day</span>
+                </div>
+
+                <div v-if="item.breaks?.length" class="calendar-breaks">
+                  <div class="break-tag" v-for="(breakItem, index) in item.breaks" :key="index">
+                    休息: {{ breakItem.start }}-{{ breakItem.end }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div class="card-footer">
-            <el-button type="text" size="mini" @click="handleUpdate(item)">修改</el-button>
-            <el-button type="text" size="mini" @click="handleDelete(item)">删除</el-button>
+
+          <div class="card-actions">
+            <el-button type="primary" link @click="handleUpdate(item)">
+              <el-icon><EditPen /></el-icon>编辑
+            </el-button>
+            <el-button type="danger" link @click="handleDelete(item)">
+              <el-icon><Delete /></el-icon>删除
+            </el-button>
           </div>
         </div>
       </div>
@@ -156,7 +174,7 @@
 
 <script setup name="Calendar">
 import { ref, reactive, toRefs, computed, nextTick, onMounted, onUnmounted, watch, getCurrentInstance } from 'vue'
-import { Check } from '@element-plus/icons-vue'
+import { Check, Timer, EditPen, Delete } from '@element-plus/icons-vue'
 import { listCalendar, getCalendar, delCalendar, addCalendar, updateCalendar } from "@/api/master/calendar"
 import useCalendarStore from '@/stores/modules/calendar'
 
@@ -525,199 +543,221 @@ onUnmounted(() => {
 }
 
 .calendar-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(99, 104, 132, 0.15);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-  padding: 50px 16px 16px;
+  --theme-color: #3b82f6;
+  --theme-bg-soft: rgba(59, 130, 246, 0.05);
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-  width: 100%;
-  min-width: 280px;
-  max-width: 400px;
-  height: 320px;
-  min-height: 320px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  padding: 0;
+  height: 340px;
+  min-height: 340px;
 }
 
-.calendar-card::before {
-  content: '';
-  position: absolute;
-  width: 60px;
-  height: 100%;
-  top: 0;
-  right: -20px;
-  background: rgba(64, 158, 255, 0.08);
-  transform: rotate(10deg);
-  pointer-events: none;
+.calendar-card.theme-blue {
+  --theme-color: #3b82f6;
+  --theme-bg-soft: rgba(59, 130, 246, 0.05);
+}
+
+.calendar-card.theme-orange {
+  --theme-color: #f59e0b;
+  --theme-bg-soft: rgba(245, 158, 11, 0.05);
 }
 
 .calendar-card:hover {
-  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
-.card-header {
+/* 顶部装订区 */
+.calendar-binder {
+  height: 24px;
+  background: #f3f4f6;
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
   align-items: center;
-  margin-bottom: 20px;
-  flex-shrink: 0;
-}
-
-.card-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: #1f2a37;
-}
-
-.card-header :deep(.el-tag) {
-  font-size: 16px;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #4b5563;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.card-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 18px;
-}
-
-.card-row .label {
-  color: #9ca3af;
-}
-
-.card-row .value {
-  font-weight: 600;
-  color: #1f2a37;
-}
-
-.break-list {
-  border-top: 1px dashed #e2e8f0;
-  margin-top: 8px;
-  padding-top: 8px;
-}
-
-.break-title {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
-
-.break-item {
-  background: rgba(66, 153, 225, 0.08);
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: auto;
-  padding-top: 12px;
-  flex-shrink: 0;
-}
-
-.selection-summary {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-  gap: 12px;
-  font-size: 14px;
-  color: #4b5563;
-}
-
-.calendar-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 8px;
-}
-
-.select-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(66, 153, 225, 0.12);
-  border: 1px solid rgba(66, 153, 225, 0.3);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-bottom: 2px solid #e5e7eb;
   z-index: 2;
 }
 
-.select-badge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(66, 153, 225, 0.3);
+.binder-hole {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.select-badge .check-icon {
-  color: #409eff;
-  font-size: 16px;
-  transition: transform 0.2s ease;
+/* 内页容器 */
+.calendar-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.calendar-card.is-selected {
-  border-color: #3b82f6;
-  box-shadow: 0 18px 35px rgba(59, 130, 246, 0.25);
+/* 页眉条 */
+.calendar-header-bar {
+  background: var(--theme-color);
+  padding: 8px 16px;
+  color: white;
+  text-align: center;
 }
 
-.calendar-card.is-selected .select-badge {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: #3b82f6;
+.pattern-text {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
 }
 
-.calendar-card.is-selected .check-icon {
-  color: #1d4ed8;
+/* 主体内容 */
+.calendar-body {
+  padding: 24px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
+  position: relative;
 }
 
-.load-more-tip {
-  padding: 12px 0;
+/* 装饰性网格线 */
+.calendar-body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.calendar-title-large {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 20px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.calendar-schedule {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1;
+}
+
+.schedule-item {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.main-shift {
+  background: var(--theme-bg-soft);
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--theme-color);
+  font-weight: 600;
+  border: 1px dashed var(--theme-color);
+}
+
+.work-hours {
   color: #6b7280;
   font-size: 14px;
 }
 
-.empty-placeholder {
-  padding: 40px 0;
-  display: flex;
-  justify-content: center;
+.hour-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin-right: 4px;
 }
 
-.check-icon {
-  transition: transform 0.2s ease;
+.calendar-breaks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.break-tag {
+  font-size: 11px;
+  background: #f3f4f6;
+  color: #4b5563;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+/* 底部操作 */
+.card-actions {
+  padding: 12px 16px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-around;
+  background: #fff;
+}
+
+.card-actions .el-button {
+  font-weight: 600;
+}
+
+/* 选择徽标 */
+.select-badge {
+  position: absolute;
+  top: 36px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.calendar-card.is-selected {
+  border: 2px solid var(--theme-color);
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2);
+}
+
+.calendar-card.is-selected .select-badge {
+  background: var(--theme-color);
+  border-color: #fff;
 }
 
 .calendar-card.is-selected .check-icon {
-  transform: scale(1.2);
+  color: #fff;
+}
+
+.check-icon {
+  font-size: 18px;
+  color: #d1d5db;
 }
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  grid-auto-rows: 320px;
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-auto-rows: 340px;
+  gap: 32px;
+  padding: 16px;
 }
 
 .load-more-sentinel {

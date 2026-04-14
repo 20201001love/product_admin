@@ -59,8 +59,8 @@
             fill="url(#gradient)" />
           <defs>
             <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+              <stop offset="0%" style="stop-color:#14b8a6;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#0e7490;stop-opacity:1" />
             </linearGradient>
           </defs>
         </svg>
@@ -714,12 +714,12 @@ getList()
 .divider-line {
   flex: 1;
   height: 2px;
-  background: linear-gradient(to right, transparent 0%, #e0e6f7 30%, #70799e 100%);
+  background: linear-gradient(to right, transparent 0%, #ccfbf1 30%, #0d9488 100%);
   position: relative;
 }
 
 .divider-line:last-child {
-  background: linear-gradient(to left, transparent 0%, #e0e6f7 30%, #70799e 100%);
+  background: linear-gradient(to left, transparent 0%, #ccfbf1 30%, #0d9488 100%);
 }
 
 .divider-decoration {

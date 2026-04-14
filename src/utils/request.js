@@ -81,13 +81,13 @@ service.interceptors.request.use(
      * 如果请求头中设置了 isToken: false，则不会自动添加 Token
      * 用于某些不需要认证的接口（如登录、注册等）
      */
-    const isToken = (config.headers || {}).isToken === false
+  const isToken = (config.headers || {}).isToken === false
 
     /**
      * 如果存在 Token 且未禁用 Token，则自动添加到请求头
      * 使用 Bearer Token 认证方式（JWT 标准格式）
      */
-    if (getToken() && !isToken) {
+  if (getToken() && !isToken) {
       config.headers['Authorization'] = 'Bearer ' + getToken()
     }
 
@@ -98,13 +98,13 @@ service.interceptors.request.use(
      *
      * 原因：某些后端接口需要查询参数在 URL 中，而不是在 params 对象中
      */
-    // get请求映射params参数
-    if (config.method === 'get' && config.params) {
-      let url = config.url + '?' + tansParams(config.params)
-      url = url.slice(0, -1)
-      config.params = {}
-      config.url = url
-    }
+  // get请求映射params参数
+  if (config.method === 'get' && config.params) {
+    let url = config.url + '?' + tansParams(config.params)
+    url = url.slice(0, -1)
+    config.params = {}
+    config.url = url
+  }
 
     // ========== 3. 防重复提交处理 ==========
     /**
@@ -118,13 +118,13 @@ service.interceptors.request.use(
      * 对 POST 和 PUT 请求进行防重复提交检查
      * 原理：比较当前请求与上一次请求的 URL、数据和时间间隔
      */
-    if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put')) {
+  if (!isRepeatSubmit && (config.method === 'post' || config.method === 'put')) {
       // 构建当前请求对象，用于与上一次请求进行比较
-      const requestObj = {
+    const requestObj = {
         url: config.url, // 请求地址
         data: typeof config.data === 'object' ? JSON.stringify(config.data) : config.data, // 请求数据（转为字符串便于比较）
         time: new Date().getTime(), // 请求时间戳
-      }
+    }
 
       // 计算请求数据大小（用于判断是否超过限制）
       const requestSize = Object.keys(JSON.stringify(requestObj)).length
@@ -134,21 +134,21 @@ service.interceptors.request.use(
        * 如果请求数据过大，跳过防重复提交检查
        * 原因：大文件上传时，缓存大量数据会影响性能
        */
-      if (requestSize >= limitSize) {
-        console.warn(`[${config.url}]: ` + '请求数据大小超出允许的5M限制，无法进行防重复提交验证。')
-        return config
-      }
+    if (requestSize >= limitSize) {
+      console.warn(`[${config.url}]: ` + '请求数据大小超出允许的5M限制，无法进行防重复提交验证。')
+      return config
+    }
 
       // 从 sessionStorage 中获取上一次请求的信息
-      const sessionObj = cache.session.getJSON('sessionObj')
+    const sessionObj = cache.session.getJSON('sessionObj')
 
       /**
        * 如果这是第一次请求（没有上一次请求记录）
        * 直接保存当前请求信息到 sessionStorage
        */
-      if (sessionObj === undefined || sessionObj === null || sessionObj === '') {
-        cache.session.setJSON('sessionObj', requestObj)
-      } else {
+    if (sessionObj === undefined || sessionObj === null || sessionObj === '') {
+      cache.session.setJSON('sessionObj', requestObj)
+    } else {
         // 获取上一次请求的信息
         const s_url = sessionObj.url // 上一次请求的地址
         const s_data = sessionObj.data // 上一次请求的数据
@@ -169,18 +169,18 @@ service.interceptors.request.use(
           requestObj.time - s_time < interval &&
           s_url === requestObj.url
         ) {
-          const message = '数据正在处理，请勿重复提交'
-          console.warn(`[${s_url}]: ` + message)
-          return Promise.reject(new Error(message))
-        } else {
+        const message = '数据正在处理，请勿重复提交'
+        console.warn(`[${s_url}]: ` + message)
+        return Promise.reject(new Error(message))
+      } else {
           // 不是重复提交，更新 sessionStorage 中的请求信息
-          cache.session.setJSON('sessionObj', requestObj)
-        }
+        cache.session.setJSON('sessionObj', requestObj)
       }
     }
+  }
 
     // 返回处理后的请求配置
-    return config
+  return config
   },
   /**
    * 请求错误处理
@@ -252,20 +252,20 @@ service.interceptors.response.use(
         })
           .then(() => {
             // 用户点击"重新登录"
-            isRelogin.show = false
+          isRelogin.show = false
             // 清除用户登录信息（Token、用户信息等）
             useUserStore()
               .logOut()
               .then(() => {
                 // 跳转到首页
-                location.href = '/index'
+            location.href = '/index'
               })
           })
           .catch(() => {
             // 用户点击"取消"，关闭弹窗
-            isRelogin.show = false
-          })
-      }
+        isRelogin.show = false
+      })
+    }
       // 拒绝 Promise，阻止后续处理
       return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
     } else if (code === 500) {
@@ -279,8 +279,8 @@ service.interceptors.response.use(
         return Promise.reject(res.data)
       } else {
         // 普通错误，显示错误提示
-        ElMessage({ message: msg, type: 'error' })
-        return Promise.reject(new Error(msg))
+      ElMessage({ message: msg, type: 'error' })
+      return Promise.reject(new Error(msg))
       }
     } else if (code === 601) {
       /**
@@ -387,12 +387,12 @@ export function download(url, params, filename, config) {
        * 设置请求头
        * 使用表单格式，而不是 JSON 格式
        */
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       /**
        * 响应类型为 blob（二进制数据）
        * 用于接收文件数据
        */
-      responseType: 'blob',
+    responseType: 'blob',
       /**
        * 合并额外的配置项
        * 允许调用者传入自定义配置（如超时时间、请求头等）
@@ -404,31 +404,31 @@ export function download(url, params, filename, config) {
        * 验证响应数据是否为有效的 Blob 数据
        * 如果后端返回的是错误信息（JSON 格式），会被识别为无效的 Blob
        */
-      const isBlob = blobValidate(data)
+    const isBlob = blobValidate(data)
 
-      if (isBlob) {
+    if (isBlob) {
         // 响应是有效的文件数据，创建 Blob 对象并保存文件
-        const blob = new Blob([data])
+      const blob = new Blob([data])
         saveAs(blob, filename) // 触发浏览器下载
-      } else {
+    } else {
         // 响应不是文件数据，可能是错误信息
         // 尝试解析为 JSON，提取错误信息并提示用户
-        const resText = await data.text()
-        const rspObj = JSON.parse(resText)
-        const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
-        ElMessage.error(errMsg)
-      }
+      const resText = await data.text()
+      const rspObj = JSON.parse(resText)
+      const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
+      ElMessage.error(errMsg)
+    }
 
       // 关闭加载动画
-      downloadLoadingInstance.close()
+    downloadLoadingInstance.close()
     })
     .catch((r) => {
       // 下载失败，记录错误并提示用户
-      console.error(r)
-      ElMessage.error('下载文件出现错误，请联系管理员！')
+    console.error(r)
+    ElMessage.error('下载文件出现错误，请联系管理员！')
       // 关闭加载动画
-      downloadLoadingInstance.close()
-    })
+    downloadLoadingInstance.close()
+  })
 }
 
 // ==================== 导出 ====================

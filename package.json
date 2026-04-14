@@ -23,6 +23,7 @@
     "@element-plus/icons-vue": "^2.3.2",
     "@vueuse/core": "^14.1.0",
     "axios": "^1.13.2",
+    "dhtmlx-gantt": "^9.1.1",
     "element-plus": "^2.12.0",
     "file-saver": "^2.0.5",
     "fuse.js": "^7.1.0",
